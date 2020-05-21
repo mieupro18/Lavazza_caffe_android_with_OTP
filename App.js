@@ -33,6 +33,8 @@ import ProductList from './components/productList';
 // import WifiHotspot from './components/wifi-hotspot';
 // import WifiReborn from './components/wifi-reborn';
 
+import AndroidWifi from './components/android-wifi';
+
 const App = () => {
   return (
     <Container>
@@ -43,7 +45,7 @@ const App = () => {
         </Body>
         <Right />
       </Header>
-      {/* <WifiReborn /> */}
+      {/* <AndroidWifi /> */}
       <ProductList />
     </Container>
   );

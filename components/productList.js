@@ -10,6 +10,9 @@ import {
   SafeAreaView,
   Alert,
   Modal,
+  BackHandler,
+  PermissionsAndroid,
+  ActivityIndicator,
 } from 'react-native';
 import {
   Container,
@@ -24,23 +27,26 @@ import {
 } from 'native-base';
 
 import Icon from 'react-native-vector-icons/Entypo';
+import wifi from 'react-native-android-wifi';
 
+// var productList = [
+//   {productId: 101, productName: 'South Indian Coffee Strong'},
+//   {productId: 102, productName: 'Tea Milk'},
+//   {productId: 103, productName: 'Tea Water'},
+// ];
+
+const ipaddress = 'http://192.168.5.1:9876/';
 class ProductList extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      ssid: 'Rascal',
+      password: 'subash11',
       selectedIndex: 0,
-      productList: [
-        'product1',
-        'product2',
-        'product3',
-        'product4',
-        'product5',
-        'product6',
-        'product7',
-        'product8',
-      ],
-      productListURL: [
+      wifiConnectionStatus: false,
+      deviceProductList: [],
+      isDispensing: false,
+      allProductListURL: [
         {
           productName: 'Cappuccino',
           src: require('../productImages/product1.png'),
@@ -79,10 +85,117 @@ class ProductList extends Component {
     };
   }
 
+  async componentDidMount() {
+    console.log(wifi);
+    await this.setState({isLoading: true});
+    await this.askForUserPermissions();
+    await wifi.setEnabled(true);
+
+    await wifi.connectionStatus(async isConnected => {
+      await this.setState({wifiConnectionStatus: isConnected});
+    });
+
+    if (this.state.wifiConnectionStatus) {
+      await wifi.disconnect();
+    }
+    await wifi.findAndConnect(this.state.ssid, this.state.password, found => {
+      console.log(found);
+      this.setState({ssidExist: found});
+    });
+
+    await wifi.connectionStatus(async isConnected => {
+      await this.setState({wifiConnectionStatus: isConnected});
+    });
+
+    await this.getProductInfo();
+  }
+
+  askForUserPermissions = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Wifi networks',
+          message: 'We need your permission in order to find wifi networks',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Thank you for your permission! :)');
+      } else {
+        BackHandler.exitApp();
+        console.log(
+          'You will not able to retrieve wifi available networks list',
+        );
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  getProductInfo = async () => {
+    fetch(ipaddress + 'getProductInfo')
+      .then(response => response.json())
+      .then(async resultData => {
+        if (resultData.status === 'success') {
+          let deviceProductList = [];
+
+          await resultData.data.map(async product => {
+            let filterProduct = await this.state.allProductListURL.find(
+              allproduct => allproduct.productName === product.productName,
+            );
+            filterProduct.productId = product.productId;
+            deviceProductList.push(filterProduct);
+          });
+          await this.setState({
+            deviceProductList: deviceProductList,
+            isLoading: false,
+          });
+        } else {
+          await this.setState({isLoading: false});
+        }
+      })
+      .catch(async e => {
+        Alert.alert('Error', "Coundn't Connect to device", [
+          {text: 'Close App', onPress: () => BackHandler.exitApp()},
+        ]);
+        console.log(e);
+      });
+  };
+  async componentWillUnmount() {
+    await wifi.setEnabled(false);
+  }
+
+  getDispense = async productId => {
+    await this.setState({isDispensing: true});
+    console.log(productId);
+
+    fetch(ipaddress + 'dispenseProduct', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: {
+        productId: productId,
+        customerName: 'Arun',
+      },
+    })
+      .then(response => response.json())
+      .then(async resultData => {
+        if (resultData.status === 'success') {
+          await this.setState({isDispensing: false});
+          Alert.alert('Success', 'Get Your Drink', [{text: 'Thanks'}]);
+        }
+      })
+      .catch(async e => {
+        alert('Unable to Dispense. Please Try Again..!');
+        await this.setState({isDispensing: false});
+      });
+  };
+
   render() {
     return (
       <ScrollView style={{flexGrow: 1}}>
-        {this.state.productListURL.map((product, index) => {
+        {this.state.deviceProductList.map((product, index) => {
           return (
             <TouchableHighlight
               onPress={async () => {
@@ -124,64 +237,98 @@ class ProductList extends Component {
             </TouchableHighlight>
           );
         })}
+        {this.state.deviceProductList.length > 0 ? (
+          <Modal
+            animationType="slide"
+            visible={this.state.modalVisible}
+            onRequestClose={async () => {
+              await this.setState({modalVisible: false});
+              // Alert.alert('Modal has been closed.');
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <View>
+                  <Image
+                    source={
+                      this.state.deviceProductList[this.state.selectedIndex].src
+                    }
+                  />
+                </View>
+                <View
+                  style={{
+                    marginTop: 'auto',
+                    marginBottom: 'auto',
+                  }}>
+                  <Text style={styles.productName}>
+                    {
+                      this.state.deviceProductList[this.state.selectedIndex]
+                        .productName
+                    }
+                  </Text>
+                </View>
 
-        <Modal
-          animationType="slide"
-          // transparent={true}
-          visible={this.state.modalVisible}
-          onRequestClose={async () => {
-            await this.setState({modalVisible: false});
-            // Alert.alert('Modal has been closed.');
-          }}>
+                <View
+                  style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: 20,
+                  }}>
+                  <Icon.Button
+                    name="cross"
+                    size={30}
+                    color="black"
+                    backgroundColor="#f1f2f6"
+                    onPress={async () => {
+                      await this.setState({
+                        modalVisible: false,
+                      });
+                    }}>
+                    Cancel
+                  </Icon.Button>
+
+                  <Icon.Button
+                    disabled={this.state.isDispensing}
+                    name="trash"
+                    size={30}
+                    color="white"
+                    backgroundColor="#b85400"
+                    productId={
+                      this.state.deviceProductList[this.state.selectedIndex]
+                        .productId
+                    }
+                    onPress={async () => {
+                      await this.getDispense(
+                        this.state.deviceProductList[this.state.selectedIndex]
+                          .productId,
+                      );
+                    }}>
+                    Get My Drink
+                  </Icon.Button>
+                </View>
+                {this.state.isDispensing ? (
+                  <View style={{flexDirection: 'row', marginTop: 20}}>
+                    <ActivityIndicator size="small" color="#b85400" />
+                    <Text style={styles.productName}>Dispensing...!</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </Modal>
+        ) : null}
+
+        <Modal animationType="slide" visible={this.state.isLoading}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <View>
                 <Image
-                  source={
-                    this.state.productListURL[this.state.selectedIndex].src
-                  }
+                  style={{width: 300, height: 300}}
+                  source={require('../productImages/dispensing1.gif')}
                 />
               </View>
-              <View
-                style={{
-                  marginTop: 'auto',
-                  marginBottom: 'auto',
-                }}>
-                <Text style={styles.productName}>
-                  {
-                    this.state.productListURL[this.state.selectedIndex]
-                      .productName
-                  }
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  width: '100%',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: 20,
-                }}>
-                <Icon.Button
-                  name="cross"
-                  size={30}
-                  color="black"
-                  backgroundColor="#f1f2f6"
-                  onPress={async () => {
-                    await this.setState({
-                      modalVisible: !this.state.modalVisible,
-                    });
-                  }}>
-                  Cancel
-                </Icon.Button>
-
-                <Icon.Button
-                  name="trash"
-                  size={30}
-                  color="white"
-                  backgroundColor="#b85400">
-                  Get My Drink
-                </Icon.Button>
+              <View style={{flexDirection: 'row'}}>
+                <ActivityIndicator size="small" color="#b85400" />
+                <Text style={styles.productName}>Connecting...!</Text>
               </View>
             </View>
           </View>
