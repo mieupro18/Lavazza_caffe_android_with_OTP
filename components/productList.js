@@ -35,7 +35,7 @@ import wifi from 'react-native-android-wifi';
 //   {productId: 103, productName: 'Tea Water'},
 // ];
 
-const ipaddress = 'http://192.168.5.1:9876/';
+const ipaddress = 'http://198.168.43.207:9876/';
 class ProductList extends Component {
   constructor(props) {
     super(props);
@@ -107,7 +107,7 @@ class ProductList extends Component {
       await this.setState({wifiConnectionStatus: isConnected});
     });
 
-    await this.getProductInfo();
+    this.timerId = setInterval(() => this.getProductInfo(), 5000);
   }
 
   askForUserPermissions = async () => {
@@ -133,34 +133,43 @@ class ProductList extends Component {
   };
 
   getProductInfo = async () => {
-    fetch(ipaddress + 'getProductInfo')
-      .then(response => response.json())
-      .then(async resultData => {
-        if (resultData.status === 'success') {
-          let deviceProductList = [];
+    console.log('get Product Info');
+    wifi.getIP(ip => {
+      console.log(ip);
+      if (ip !== '0.0.0.0') {
+        clearInterval(this.timerId);
 
-          await resultData.data.map(async product => {
-            let filterProduct = await this.state.allProductListURL.find(
-              allproduct => allproduct.productName === product.productName,
-            );
-            filterProduct.productId = product.productId;
-            deviceProductList.push(filterProduct);
+        fetch(ipaddress + 'getProductInfo')
+          .then(response => response.json())
+          .then(async resultData => {
+            if (resultData.status === 'success') {
+              let deviceProductList = [];
+
+              await resultData.data.map(async product => {
+                let filterProduct = await this.state.allProductListURL.find(
+                  allproduct => allproduct.productName === product.productName,
+                );
+                filterProduct.productId = product.productId;
+                deviceProductList.push(filterProduct);
+              });
+              await this.setState({
+                deviceProductList: deviceProductList,
+                isLoading: false,
+              });
+            } else {
+              await this.setState({isLoading: false});
+            }
+          })
+          .catch(async e => {
+            Alert.alert('Error', "Coundn't Connect to device", [
+              {text: 'Close App', onPress: () => BackHandler.exitApp()},
+            ]);
+            console.log(e);
           });
-          await this.setState({
-            deviceProductList: deviceProductList,
-            isLoading: false,
-          });
-        } else {
-          await this.setState({isLoading: false});
-        }
-      })
-      .catch(async e => {
-        Alert.alert('Error', "Coundn't Connect to device", [
-          {text: 'Close App', onPress: () => BackHandler.exitApp()},
-        ]);
-        console.log(e);
-      });
+      }
+    });
   };
+
   async componentWillUnmount() {
     await wifi.setEnabled(false);
   }
