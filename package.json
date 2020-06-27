@@ -10,15 +10,34 @@
     "lint": "eslint ."
   },
   "dependencies": {
+<<<<<<< Updated upstream
+=======
+    "@react-native-community/async-storage": "1.11.0",
+    "@react-native-community/cli-platform-android": "^4.9.0",
+    "@react-native-community/masked-view": "0.1.10",
+    "@react-native-community/netinfo": "5.9.4",
+    "@react-navigation/native": "5.6.1",
+    "@react-navigation/stack": "5.6.2",
+>>>>>>> Stashed changes
     "native-base": "^2.13.12",
     "opencollective-postinstall": "^2.0.2",
     "react": "16.11.0",
     "react-native": "0.62.2",
+<<<<<<< Updated upstream
     "react-native-android-wifi": "0.0.41",
     "react-native-multipeer": "^0.1.1",
     "react-native-vector-icons": "^6.6.0",
     "react-native-wifi-p2p": "^2.0.2",
     "react-native-wifi-reborn": "^4.0.0"
+=======
+    "react-native-background-timer": "2.2.0",
+    "react-native-gesture-handler": "1.6.1",
+    "react-native-reanimated": "1.9.0",
+    "react-native-safe-area-context": "3.0.7",
+    "react-native-screens": "2.9.0",
+    "react-native-star-rating": "1.1.0",
+    "react-native-vector-icons": "^6.6.0"
+>>>>>>> Stashed changes
   },
   "devDependencies": {
     "@babel/core": "7.9.6",

@@ -4,6 +4,14 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import org.reactnative.maskedview.RNCMaskedViewPackage;
+import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
+import com.swmansion.rnscreens.RNScreensPackage;
+import com.swmansion.reanimated.ReanimatedPackage;
+import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
+import com.ocetnik.timer.BackgroundTimerPackage;
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
+import com.reactnativecommunity.netinfo.NetInfoPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
@@ -36,6 +44,14 @@ public class MainApplication extends Application implements ReactApplication {
         // protected List<ReactPackage> getPackages() {
         // return Arrays.asList(
         //     new MainReactPackage(),
+            //new RNCMaskedViewPackage(),
+            //new SafeAreaContextPackage(),
+            //new RNScreensPackage(),
+            //new ReanimatedPackage(),
+            //new RNGestureHandlerPackage(),
+            //new BackgroundTimerPackage(),
+            //new AsyncStoragePackage(),
+            //new NetInfoPackage(),
             // new RNWifiPackage();
         //     new HotspotPackage()
         // );
