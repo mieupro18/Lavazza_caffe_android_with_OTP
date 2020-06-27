@@ -26,19 +26,7 @@ import {
 } from 'native-base';
 
 import ProductList from './components/productList';
-<<<<<<< Updated upstream
-// import P2P from './components/p2p';
 
-// import MultiPeer from './components/multipeer';
-
-// import WifiHotspot from './components/wifi-hotspot';
-// import WifiReborn from './components/wifi-reborn';
-
-import AndroidWifi from './components/android-wifi';
-
-const App = () => {
-  return (
-=======
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 
@@ -61,28 +49,3 @@ const App = () => {
 
 export default App;
 
-/*
- <Provider store={store}>
->>>>>>> Stashed changes
-    <Container>
-      <Header style={{backgroundColor: '#b85400'}} androidStatusBarColor="#000">
-        <Left />
-        <Body>
-          <Title>LavAzza</Title>
-        </Body>
-        <Right />
-      </Header>
-<<<<<<< Updated upstream
-      {/* <AndroidWifi /> */}
-      <ProductList />
-    </Container>
-  );
-};
-
-export default App;
-=======
-      {/* <AndroidWifi /> */
-      /*<ProductList store={store}/>
-    </Container>
-    </Provider>*/
->>>>>>> Stashed changes
