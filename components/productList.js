@@ -23,6 +23,7 @@ import {
   Right,
   Left,
   Button,
+  Toast,
 } from 'native-base';
 import NetInfo from '@react-native-community/netinfo';
 import  AsyncStorage from '@react-native-community/async-storage';
@@ -30,12 +31,16 @@ import BackgroundTimer from 'react-native-background-timer';
 import StarRating from 'react-native-star-rating';
 import Icon from 'react-native-vector-icons/Feather';
 import TestWifiModule from "./TestWifiModule";
+import { Rating, AirbnbRating } from 'react-native-ratings';
 
-var ipaddress = '';
+var ipaddress = '192.168.5.1';
 class ProductList extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isLoading:true,
+      splashScreenVisible:true,
+      isConnecting:false,
       selectedIndex: 0,
       deviceProductList: [],
       isDispensing: false,
@@ -87,13 +92,22 @@ class ProductList extends Component {
     console.log(storedValue)
   }
 
+   
+
   async componentDidMount() {
     // eslint-disable-next-line react/no-did-mount-set-state
     
     //AppState.addEventListener("change", this._handleAppStateChange.bind(this))
     await this.sendFeedbackData();
-    this.setState({isLoading: true});
-    await this.askForUserPermissions();
+    //this.setState({isLoading: true});
+    setTimeout(async () => {  
+      this.setState({   
+        splashScreenVisible : false   
+      });   
+    }, 3000);  
+    //this.Hide_Splash_Screen
+    //this.getProductInfo();
+    /*await this.askForUserPermissions();
     console.log('crossed permission access stage');
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
@@ -139,11 +153,64 @@ class ProductList extends Component {
         Alert.alert('Info', 'Something Went Wrong...Please restart the app' , [
           {text: 'Close App', onPress: () => BackHandler.exitApp()},
         ]);
-      });
+      });*/
   }
 
   async componentWillUnmount() {
     console.log(await TestWifiModule.forgetNetwork());
+  }
+
+  onConnect = async () =>{
+    await this.askForUserPermissions();
+    console.log('crossed permission access stage');
+    TestWifiModule.isWifiTurnedOn()
+      .then(async enabled => {
+        if(! enabled){
+          console.log(await TestWifiModule.turnOnWifi());
+        }
+        console.log(await TestWifiModule.connectToCoffeeMachine());
+        setTimeout(async () => {
+          console.log('Connection check');
+          var temp = await TestWifiModule.isConnectedToGivenSSID();
+          console.log(temp);
+          if(temp) {
+            console.log('true');
+            var ip = await TestWifiModule.getDefaultGatewayIp();
+            // eslint-disable-next-line no-bitwise
+            var firstByte = ip & 255;
+            // eslint-disable-next-line no-bitwise
+            var secondByte = (ip >> 8) & 255;
+            // eslint-disable-next-line no-bitwise
+            var thirdByte = (ip >> 16) & 255;
+            // eslint-disable-next-line no-bitwise
+            var fourthByte = (ip >> 24) & 255;
+            ipaddress =
+              firstByte +
+              '.' +
+              secondByte +
+              '.' +
+              thirdByte +
+              '.' +
+              fourthByte;
+            console.log(ipaddress);
+            this.getProductInfo();
+          } else {
+            console.log('Connection to the coffee machine failed');
+            console.log(await TestWifiModule.forgetNetwork());
+            this.setState({isConnecting:false})
+            Alert.alert('Info', 'Connection to the coffee machine failed' , [
+              {text: 'Okay'},
+            ]);
+          }
+        }, 5000);
+      })
+      .catch(async e => {
+        console.log(e);
+        Alert.alert('Info', 'Something Went Wrong...Please restart the app' , [
+          {text: 'Close App', onPress: () => BackHandler.exitApp()},
+        ]);
+      });
+
   }
 
   askForUserPermissions = async () => {
@@ -188,17 +255,22 @@ class ProductList extends Component {
             this.setState({
               deviceProductList: deviceProductList,
               isLoading: false,
+              isConnecting:false,
             });
           } else {
-            Alert.alert('Info', 'Something Went Wrong...Please restart the app' , [
-              {text: 'Close App', onPress: () => BackHandler.exitApp()},
+            console.log(await TestWifiModule.forgetNetwork());
+            this.setState({isConnecting:false})
+            Alert.alert('Info', 'Something Went Wrong...Please reconnect' , [
+              {text: 'Okay'},
             ]);
             //this.setState({isLoading: false});
           }
         })
         .catch(async e => {
-          Alert.alert('Info', "Network error...Please restart the app", [
-            {text: 'Close App', onPress: () => BackHandler.exitApp()},
+          console.log(await TestWifiModule.forgetNetwork());
+          this.setState({isConnecting:false})
+          Alert.alert('Info', "Network error...Please reconnect", [
+            {text: 'Okay'},
           ]);
           console.log(e);
         });
@@ -260,17 +332,21 @@ class ProductList extends Component {
       });
   };
 
-  onStarRatingPress = async (rating) => {
-    this.setState({starCount:rating})
+  async ratingCompleted( rating ) {
     console.log(rating);
   }
 
-  render() {
+  render() {  
     return (
       <ScrollView style={{flexGrow: 1}}>
         {this.state.isLoading ? null : (
-          <View style={styles.header} >
-            <Text style={styles.headerText}>LavAzza</Text>
+          <View style={{flexDirection:'row',justifyContent:'space-between',backgroundColor:'#100A45',height:50}} >
+            <View style={{marginLeft:20,justifyContent:'center'}}>
+            <Text style={{color:'#ffffff',fontWeight:'bold',size:30}}>Menu</Text>
+            </View>
+            <View style={{marginRight:20,justifyContent:'center'}}>
+              <Icon name='menu' size={30} color='#ffffff' onPress={()=>{console.log('pressed')}}/>
+            </View>
           </View>
           )}
         {this.state.deviceProductList.map((product, index) => {
@@ -351,33 +427,33 @@ class ProductList extends Component {
                   </Text>
                 </View>
                 {this.state.isDispensing ? (
-                  <View style={{marginTop: 20}}>
-                    {this.state.orderReceived ? <Text style={styles.productName}>Order Received</Text> : null }
+                 
                     <View style={{flexDirection:'row', marginTop: 20}}>
                       <ActivityIndicator size="small" color="#b85400" />
                       <Text style={styles.productName}>Please wait...!</Text>
                     </View>
-                  </View>
                 ) : (
-                <View>
+                <View style={{marginTop: 20}}>
                     {this.state.feedbackVisible ?
-                    <StarRating
-                      disabled={false}
-                      maxStars={5}
-                      rating={this.state.starCount}
-                      fullStarColor={'#b85400'}
-                      selectedStar={(rating) => this.onStarRatingPress(rating)}
+                    <AirbnbRating
+                    count={5}
+                    reviews={["Terrible", "Bad", "OK", "Good", "Amazing"]}
+                    showRating={false}
+                    defaultRating={0}
+                    onFinishRating={this.ratingCompleted}
+                    size={30}
                     /> : null}
                     <View
                       style={{
                         width: '100%',
                         flexDirection: 'row',
-                        justifyContent: 'space-between',
+                        justifyContent: 'space-around',
                         marginTop: 20,
                       }}>
                       <Icon.Button
                         name="x"
                         size={30}
+                  
                         color="black"
                         backgroundColor="#f1f2f6"
                         onPress={async () => {
@@ -393,6 +469,7 @@ class ProductList extends Component {
                       <Icon.Button
                         disabled={this.state.isDispensing}
                         name="coffee"
+                      
                         size={30}
                         color="white"
                         backgroundColor="#b85400"
@@ -406,7 +483,7 @@ class ProductList extends Component {
                               .productId,
                           );
                         }}>
-                        Get My Drink
+                        Order
                       </Icon.Button>
                     </View>
                 </View>
@@ -415,21 +492,48 @@ class ProductList extends Component {
             </View>
           </Modal>
         ) : null}
-
+        {this.state.splashScreenVisible ? 
+          <View style={styles.logoContainer}>
+            <View>
+              <Image
+              style={styles.logo}
+              source={require('../productImages/Lavazza.png')}
+              />
+            </View>
+          </View>
+        :null}
         {/*<Modal animationType="slide" visible={this.state.isLoading}>*/}
-        {this.state.isLoading ?
+        {(this.state.isLoading) && (! this.state.splashScreenVisible) ?
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-              <View>
+            <View style={{}}>
+              <Image
+              style={{width:150,height:75}}
+              source={require('../productImages/Lavazza.png')}
+              />
+            </View>
+              <View style={{borderRadius: 125, overflow: 'hidden',marginTop:20}}>
                 <Image
-                  style={{width: 300, height: 300}}
-                  source={require('../productImages/dispensing1.gif')}
+                  style={{width: 250, height: 250}}
+                  source={require('../productImages/connect.gif')}
                 />
               </View>
-              <View style={{flexDirection: 'row'}}>
+              {this.state.isConnecting ?
+                <View style={{flexDirection: 'row',marginTop:20}}>
+                  <ActivityIndicator size="small" color="#100A45" />
+                  <Text style={{color:'#100A45',fontWeight:'bold'}}>Connecting...!</Text>
+                </View> :
+                <View style={{alignItems:'center', marginTop:20}}>
+                  <TouchableHighlight underlayColor='#100A45' style={{width:100, height:40, borderRadius:5,backgroundColor:'#100A45',alignItems:'center',justifyContent:'center'}} onPress={() => {this.setState({isConnecting:true});this.onConnect();}}>
+                    <Text style = {{color:'white'}}>
+                      Connect
+                    </Text>
+                  </TouchableHighlight>
+                </View>}
+              {/*View style={{flexDirection: 'row'}}>
                 <ActivityIndicator size="small" color="#b85400" />
                 <Text style={styles.productName}>Connecting...!</Text>
-              </View>
+              </View>*/}
             </View>
           </View>
           :null}
@@ -440,6 +544,16 @@ class ProductList extends Component {
 }
 
 const styles = StyleSheet.create({
+  logo:  
+    {    
+        width:200,
+        height:100,
+    },  
+    logoContainer:{
+      justifyContent: 'center',  
+      alignItems: 'center',
+      marginTop:'50%'
+    },
   header: {
     height:50,
     justifyContent:'center',
@@ -494,4 +608,9 @@ export default ProductList;
 
 /*var value = {"jaskar":"value"}
     var temp = JSON.stringify(value)
-    AsyncStorage.setItem('name', temp);*/
+    AsyncStorage.setItem('name', temp);
+    
+     <View style={{marginTop: 20}}>
+                    {/*{this.state.orderReceived ? <Text style={styles.productName}>Order Received</Text> : null }
+    
+    */

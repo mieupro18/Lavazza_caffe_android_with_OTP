@@ -6,31 +6,45 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, {Component} from 'react';
 
-import {SafeAreaView, StyleSheet, ScrollView, Image} from 'react-native';
-
-import {
-  Container,
-  Header,
-  Content,
-  Title,
-  Footer,
-  FooterTab,
-  Text,
-  Button,
-  Icon,
-  Left,
-  Body,
-  Right,
-} from 'native-base';
 
 import ProductList from './components/productList';
 
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
+import { Root } from 'native-base';
+//import { Rating, AirbnbRating } from 'react-native-ratings';
 
 const Stack = createStackNavigator();
+
+
+/*class App extends Component {
+  async ratingCompleted( rating ) {
+    console.log(rating);
+  }
+
+  render(){
+    return (
+      <View
+        style={{
+          marginTop: 'auto',
+          marginBottom: 'auto',
+        }}>
+      <AirbnbRating
+        count={5}
+        reviews={["Terrible", "Bad", "OK", "Good", "Amazing"]}
+        showRating={false}
+        defaultRating={0}
+        onFinishRating={this.ratingCompleted}
+        size={20}
+      />
+      </View>
+    );
+  }
+};
+
+export default App;*/
 
 const App = () => {
   return (
@@ -48,4 +62,3 @@ const App = () => {
 };
 
 export default App;
-
