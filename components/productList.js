@@ -37,10 +37,10 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 
 
 const BEFORE_PLACING_ORDER = 'Order your Beverage';
-const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 'Please wait for the order to be received';
-const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 'Order Received..Please wait';
-const ORDER_DISPENSED = 'Your Beverage dispensed';
-const UNABLE_TO_DISPENSE = 'Unable to dispense...Try again';
+const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 'Please wait..!!!';
+const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 'Order received\nPlease wait..!!!';
+const ORDER_DISPENSED = 'Your Beverage dispensed..!!!';
+const UNABLE_TO_DISPENSE = 'Unable to dispense\nTry again or restart..!!!';
 
 
 var ipaddress = '192.168.5.1';
@@ -53,7 +53,6 @@ class ProductList extends Component {
       isConnecting:false,
       selectedIndex: 0,
       deviceProductList: [],
-      orderReceived:false,
       allProductListURL: [
         {
           productName: 'Cappuccino',
@@ -104,6 +103,7 @@ class ProductList extends Component {
       this.setState({   
         splashScreenVisible : false   
       });   
+      await this.askForUserPermissions();
     }, 3000);  
   }
 
@@ -119,7 +119,7 @@ class ProductList extends Component {
   }
 
   onConnect = async () =>{
-    await this.askForUserPermissions();
+
     console.log('crossed permission access stage');
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
@@ -174,7 +174,8 @@ class ProductList extends Component {
   }
 
   onDisconnect = async () => {
-    this.setState({modalVisible:false,isConnected:false,deviceProductList:[],feedbackVisible:false});
+    this.setState({deviceProductList:[],isConnected:false})
+    this.setState({modalVisible:false,feedbackVisible:false});
     console.log(await TestWifiModule.forgetNetwork())
   }
 
@@ -247,7 +248,6 @@ class ProductList extends Component {
   };
 
   waitForDispense = async (orderId) => {
-    this.setState({orderReceived:true});
     this.intervalId = BackgroundTimer.setInterval(() => {
       fetch('http://' + ipaddress + ":9876/dispenseStatus?orderId=" + orderId,{
         headers:{
@@ -259,7 +259,7 @@ class ProductList extends Component {
           console.log(resultData);
           if(resultData.status === 'Success' && resultData.dispenseStatus === true){ 
             console.log('Dispensing Finished');
-            this.setState({feedbackVisible:true,orderReceived:false,dispenseStatus:ORDER_DISPENSED});
+            this.setState({feedbackVisible:true,dispenseStatus:ORDER_DISPENSED});
             //Alert.alert('Success', 'Get Your Drink', [{text: 'Thanks'}]);
             BackgroundTimer.clearInterval(this.intervalId)
           }
@@ -320,25 +320,21 @@ class ProductList extends Component {
         {/* Visible for 3 seconds only when app opens*/}
         {this.state.splashScreenVisible ? 
           <View style={styles.logoContainer}>
-            <View>
               <Image
               style={styles.logo}
               source={require('../productImages/Lavazza.png')}
               />
-            </View>
           </View>
         :null}
 
         {/* Visible only when app is not connected with the machine */}
-        {(! this.state.isConnected) && (! this.state.splashScreenVisible) ?
+        <Modal animationType="slide" onRequestClose={() => {BackHandler.exitApp()}} visible={(!this.state.isConnected) && (! this.state.splashScreenVisible)}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-            <View style={{}}>
               <Image
               style={{width:150,height:75}}
               source={require('../productImages/Lavazza.png')}
               />
-            </View>
               <View style={{borderRadius: 125, overflow: 'hidden',marginTop:20}}>
                 <Image
                   style={{width: 250, height: 250}}
@@ -357,152 +353,149 @@ class ProductList extends Component {
                     </Text>
                   </TouchableHighlight>
                 </View>}
-              {/*View style={{flexDirection: 'row'}}>
-                <ActivityIndicator size="small" color="#b85400" />
-                <Text style={styles.productName}>Connecting...!</Text>
-              </View>*/}
             </View>
           </View>
-          : null}
+        </Modal>
 
-          {/* Visible when app connected to the machine */}
-          {this.state.isConnected ? (
-          <View style={{flexDirection:'row',justifyContent:'space-between',backgroundColor:'#100A45',height:50}} >
-            <View style={{marginLeft:35,justifyContent:'center'}}>
-              <Text style={{color:'#ffffff',fontWeight:'bold',fontSize:20}}>Menu</Text>
-            </View>
-            <View style={{marginRight:20,justifyContent:'center'}}>
-              <Icon name='menu' size={30} color='#ffffff' onPress={async()=>{console.log('pressed')}}/>
-            </View>
+        {/* Visible when app connected to the machine */}
+        {this.state.isConnected ? (
+        <View style={{flexDirection:'row',justifyContent:'space-between',backgroundColor:'#100A45',height:50}} >
+          <View style={{marginLeft:35,justifyContent:'center'}}>
+            <Text style={{color:'#ffffff',fontWeight:'bold',fontSize:15}}>Menu</Text>
           </View>
-          ):null}
-          {this.state.deviceProductList.map((product, index) => {
-            return (
-              <Card key={index}>
-                <CardItem>
+          <View style={{marginRight:20,justifyContent:'center'}}>
+            <Icon name='menu' size={30} color='#ffffff' onPress={async()=>{console.log('pressed')}}/>
+          </View>
+        </View>
+        ):null}
+        {this.state.deviceProductList.map((product, index) => {
+          return (
+            <Card key={index}>
+              <CardItem>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                  }}>
+                  <View>
+                    <Image style={{width:75,height:75,borderRadius:75/2}} source={product.src} />
+                  </View>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      width: '100%',
+                      //marginTop: 'auto',
+                      //marginBottom: 'auto',
+                      justifyContent:'center',
+                      //marginLeft: 10,
+                      width: '50%',
+                      
                     }}>
-                    <View>
-                      <Image style={{width:75,height:75,borderRadius:75/2}} source={product.src} />
-                    </View>
-                    <View
-                      style={{
-                        //marginTop: 'auto',
-                        //marginBottom: 'auto',
-                        justifyContent:'center',
-                        //marginLeft: 10,
-                        width: '50%',
-                        
-                      }}>
-                      <Text style={styles.productName}>
-                        {product.productName}
-                      </Text>
-                    </View>
-                    <View style={{justifyContent:'center'}}>
-                      <TouchableOpacity onPress={()=>{this.setState({ modalVisible: !this.state.modalVisible,selectedIndex: index,dispenseStatus:BEFORE_PLACING_ORDER,starCount:0});}}>
-                        <Icon name="circle-with-plus" size={35} style={{color: '#100A45'}} />
-                    </TouchableOpacity>
-                    </View>
-                  </View>
-                </CardItem>
-              </Card>
-            );
-          })}
-          {this.state.deviceProductList.length > 0 ? (
-            <Modal
-              animationType="slide"
-              visible={this.state.modalVisible}
-              onRequestClose={async () => {
-                if(this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE || this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE){
-                  console.log("dispensing dont go back")
-                }
-                else if(this.state.dispenseStatus === ORDER_DISPENSED){
-                  this.onDisconnect()
-                }
-                else{
-                  this.setState({modalVisible: false,feedbackVisible:false});
-                }
-              }}>
-              <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                  <View >
-                    <Image style={{width:75,height:75,borderRadius:150/2}}
-                      source={this.state.deviceProductList[this.state.selectedIndex].src}
-                    />
-                  </View>
-                  <View style={{ marginTop: 'auto', marginBottom: 'auto',}}>
                     <Text style={styles.productName}>
-                      {
-                        this.state.deviceProductList[this.state.selectedIndex]
-                          .productName
-                      }
+                      {product.productName}
                     </Text>
                   </View>
-                  <View style={{marginTop:20, justifyContent:'center',alignItems:'center'}}>
-                    <Text style={{  color:'#6F6D6D',fontSize:10}}>Status</Text>
-                    <Text style={{ marginTop:5, color:'#100A45',fontSize:13}}>{this.state.dispenseStatus}</Text>
+                  <View style={{justifyContent:'center'}}>
+                    <TouchableOpacity onPress={()=>{this.setState({ modalVisible: !this.state.modalVisible,selectedIndex: index,dispenseStatus:BEFORE_PLACING_ORDER,starCount:0});}}>
+                      <Icon name="circle-with-plus" size={35} style={{color: '#100A45'}} />
+                  </TouchableOpacity>
                   </View>
-
-                  {/* */}
-                  {this.state.feedbackVisible ?
-                    <View style={{marginTop:20,justifyContent:'center', alignItems:'center'}}>
-                      <Text style={{ color:'#6F6D6D',fontSize:10}}>Feedback</Text>
-                      <View style={{marginTop:5}}>
-                       <StarRating
-                          disabled={false}
-                          maxStars={5}
-                          starSize={35}
-                          emptyStarColor='#6F6D6D'
-                          fullStarColor='#100A45'
-                          halfStarEnabled={false}
-                          rating={this.state.starCount}
-                          selectedStar={(rating) => this.onStarRatingPress(rating)}
-                       />
-                      </View>
-                      <TouchableHighlight underlayColor='#100A45' style={{ marginTop:20, width:100, height:40, borderRadius:5,backgroundColor:'#100A45',alignItems:'center',justifyContent:'center'}} onPress={() => {this.onDisconnect();}}>
-                       <Text style = {{color:'white'}}>
-                        Done
-                       </Text>
-                      </TouchableHighlight>
-                    </View>
-                  : null}
-
-                  { (this.state.dispenseStatus === BEFORE_PLACING_ORDER || this.state.dispenseStatus === UNABLE_TO_DISPENSE) ? 
-                    <View style={{width: '100%',flexDirection: 'row',justifyContent: 'space-around',marginTop: 20,}}>
-                      <Icon.Button
-                        name="cross"
-                        size={30}
-                        color="white"
-                        backgroundColor="#100A45"
-                        onPress={async () => {
-                          this.setState({
-                            modalVisible: false,
-                          });
-                        }}>
-                        Cancel
-                      </Icon.Button>
-                      <Ionicons.Button
-                        name="ios-cafe"
-                        size={30}
-                        color="white"
-                        backgroundColor="#100A45"  
-                        onPress={async () => {
-                          await this.getDispense(
-                            this.state.deviceProductList[this.state.selectedIndex]
-                              .productId,
-                          );
-                        }}>
-                        Dispense
-                      </Ionicons.Button>
-                    </View> 
-                  :null}
                 </View>
+              </CardItem>
+            </Card>
+          );
+        })}
+
+        {this.state.deviceProductList.length > 0 ? (
+          <Modal
+            animationType="slide"
+            visible={this.state.modalVisible}
+            onRequestClose={async () => {
+              if(this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE || this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE){
+                console.log("dispensing dont go back")
+              }
+              else if(this.state.dispenseStatus === ORDER_DISPENSED){
+                this.onDisconnect()
+              }
+              else{
+                this.setState({modalVisible: false,feedbackVisible:false});
+              }
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <View >
+                  <Image style={{width:75,height:75,borderRadius:150/2}}
+                    source={this.state.deviceProductList[this.state.selectedIndex].src}
+                  />
+                </View>
+                <View style={{ marginTop: 'auto', marginBottom: 'auto',}}>
+                  <Text style={styles.productName}>
+                    {
+                      this.state.deviceProductList[this.state.selectedIndex]
+                        .productName
+                    }
+                  </Text>
+                </View>
+                <View style={{marginTop:20, justifyContent:'center',alignItems:'center'}}>
+                  <Text style={{  color:'#6F6D6D',fontSize:10}}>Status</Text>
+                  <Text style={{ marginTop:5, color:'#100A45',fontSize:13}}>{this.state.dispenseStatus}</Text>
+                </View>
+
+                {/* */}
+                {this.state.feedbackVisible ?
+                  <View style={{marginTop:20,justifyContent:'center', alignItems:'center'}}>
+                    <Text style={{ color:'#6F6D6D',fontSize:10}}>Feedback</Text>
+                    <View style={{marginTop:5}}>
+                      <StarRating
+                        disabled={false}
+                        maxStars={5}
+                        starSize={35}
+                        emptyStarColor='#6F6D6D'
+                        fullStarColor='#100A45'
+                        halfStarEnabled={false}
+                        rating={this.state.starCount}
+                        selectedStar={(rating) => this.onStarRatingPress(rating)}
+                      />
+                    </View>
+                    <TouchableHighlight underlayColor='#100A45' style={{ marginTop:20, width:100, height:40, borderRadius:5,backgroundColor:'#100A45',alignItems:'center',justifyContent:'center'}} onPress={() => {this.onDisconnect();}}>
+                      <Text style = {{color:'white'}}>
+                      Done
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                : null}
+
+                { (this.state.dispenseStatus === BEFORE_PLACING_ORDER || this.state.dispenseStatus === UNABLE_TO_DISPENSE) ? 
+                  <View style={{width: '100%',flexDirection: 'row',justifyContent: 'space-around',marginTop: 20,}}>
+                    <Icon.Button
+                      name="cross"
+                      size={30}
+                      color="white"
+                      backgroundColor="#100A45"
+                      onPress={async () => {
+                        this.setState({
+                          modalVisible: false,
+                        });
+                      }}>
+                      Cancel
+                    </Icon.Button>
+                    <Ionicons.Button
+                      name="ios-cafe"
+                      size={30}
+                      color="white"
+                      backgroundColor="#100A45"  
+                      onPress={async () => {
+                        await this.getDispense(
+                          this.state.deviceProductList[this.state.selectedIndex]
+                            .productId,
+                        );
+                      }}>
+                      Dispense
+                    </Ionicons.Button>
+                  </View> 
+                :null}
               </View>
-            </Modal>
+            </View>
+          </Modal>
         ) : null}
       </ScrollView>
     );
@@ -516,9 +509,10 @@ const styles = StyleSheet.create({
         height:100,
     },  
     logoContainer:{
-      justifyContent: 'center',  
+      //flex:1,
+      justifyContent: 'center', 
+      marginTop: "50%", 
       alignItems: 'center',
-      marginTop:'50%'
     },
   header: {
     height:50,
@@ -593,7 +587,7 @@ export default ProductList;
                     {/*{this.state.orderReceived ? <Text style={styles.productName}>Order Received</Text> : null }
     
     */
-    /* (this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
+   /*{(! this.state.isConnected) && (! this.state.splashScreenVisible) ?*/    /* (this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
                   
                   <Image
                   style={{width:'100%',height:}}
