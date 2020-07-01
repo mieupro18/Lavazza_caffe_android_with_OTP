@@ -31,17 +31,25 @@ import BackgroundTimer from 'react-native-background-timer';
 import StarRating from 'react-native-star-rating';
 import Icon from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import TestWifiModule from "./TestWifiModule";
 import { Rating, AirbnbRating } from 'react-native-ratings';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-
+// ORDER STATUS 
 const BEFORE_PLACING_ORDER = 'Order your Beverage';
 const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 'Please wait..!!!';
-const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 'Order received\nPlease wait..!!!';
+const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 'Order received Please wait..!!!';
+const PLACE_THE_CUP = 'Please place the cup\nIf placed, click dispense';
+const DISPENSING = 'Dispensing..!!!'
 const ORDER_DISPENSED = 'Your Beverage dispensed..!!!';
-const UNABLE_TO_DISPENSE = 'Unable to dispense\nTry again or restart..!!!';
 
+// ORDEr ERROR STATUS
+const ORDER_REQUEST_FAILED = 'Order request failed\nTry again or restart..!!!'
+const DISPENSE_REQUEST_FAILED = 'Dispense request failed\nTimeout expired\nTry again or restart..!!!'
+const TIMEOUT_EXPIRED = 'Timeout expired\nTry again or restart..!!!'
+const ORDER_STATUS_REQUEST_FAILED = 'Getting order status failed\nTry again or restart..!!!'
+const ORDER_CANCELLED_BY_SERVER = 'Order cancelled\nTry again..!!!'
 
 var ipaddress = '192.168.5.1';
 class ProductList extends Component {
@@ -52,7 +60,13 @@ class ProductList extends Component {
       splashScreenVisible:true,
       isConnecting:false,
       selectedIndex: 0,
+      modalVisible: false,
+      feedbackVisible: false,
+      orderStatus:null,
+      starCount:0,
       deviceProductList: [],
+      orderId:null,
+      timer:30,
       allProductListURL: [
         {
           productName: 'Cappuccino',
@@ -87,11 +101,6 @@ class ProductList extends Component {
           src: require('../productImages/lemon_tea.png'),
         },
       ],
-
-      modalVisible: false,
-      feedbackVisible: false,
-      dispenseStatus:null,
-      starCount:0
     };
   }
 
@@ -104,6 +113,7 @@ class ProductList extends Component {
         splashScreenVisible : false   
       });   
       await this.askForUserPermissions();
+      console.log('crossed permission access stage');
     }, 3000);  
   }
 
@@ -113,14 +123,12 @@ class ProductList extends Component {
 
   sendFeedbackData = async () => {
     const netInfo = await NetInfo.fetch()
-    console.log(netInfo.isInternetReachable)
+    console.log('Internet Connection :',netInfo.isInternetReachable)
     const storedValue = await AsyncStorage.getItem('name');//.then((value) => console.log(value))
-    console.log(storedValue)
+    console.log('Data :', storedValue)
   }
 
   onConnect = async () =>{
-
-    console.log('crossed permission access stage');
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
         if(! enabled){
@@ -129,18 +137,12 @@ class ProductList extends Component {
         console.log(await TestWifiModule.connectToCoffeeMachine());
         setTimeout(async () => {
           console.log('Connection check');
-          var temp = await TestWifiModule.isConnectedToGivenSSID();
-          console.log(temp);
-          if(temp) {
+          if(await TestWifiModule.isConnectedToGivenSSID()) {
             console.log('true');
             var ip = await TestWifiModule.getDefaultGatewayIp();
-            // eslint-disable-next-line no-bitwise
             var firstByte = ip & 255;
-            // eslint-disable-next-line no-bitwise
             var secondByte = (ip >> 8) & 255;
-            // eslint-disable-next-line no-bitwise
             var thirdByte = (ip >> 16) & 255;
-            // eslint-disable-next-line no-bitwise
             var fourthByte = (ip >> 24) & 255;
             ipaddress =
               firstByte +
@@ -164,6 +166,7 @@ class ProductList extends Component {
       })
       .catch(async e => {
         console.log(e);
+        console.log(await TestWifiModule.forgetNetwork());
         this.setState({isConnecting:false})
         Alert.alert('Info', 'Something Went Wrong...Please reconnect' , [
           {text: 'Okay'},
@@ -174,8 +177,16 @@ class ProductList extends Component {
   }
 
   onDisconnect = async () => {
-    this.setState({deviceProductList:[],isConnected:false})
-    this.setState({modalVisible:false,feedbackVisible:false});
+    this.setState({
+      deviceProductList:[],
+      isConnected:false})
+    this.setState({
+      modalVisible:false,
+      feedbackVisible:false,
+      selectedIndex:0,
+      orderId:null,
+      orderStatus:null,
+      starCount:0});
     console.log(await TestWifiModule.forgetNetwork())
   }
 
@@ -247,9 +258,13 @@ class ProductList extends Component {
         });
   };
 
-  waitForDispense = async (orderId) => {
+  stopPoll = async () => {
+    BackgroundTimer.clearInterval(this.intervalId)
+  }
+
+  startPoll = async () => {
     this.intervalId = BackgroundTimer.setInterval(() => {
-      fetch('http://' + ipaddress + ":9876/dispenseStatus?orderId=" + orderId,{
+      fetch('http://' + ipaddress + ":9876/orderStatus?orderId=" + this.state.orderId,{
         headers:{
           'tokenId':"secret",
         }
@@ -257,28 +272,59 @@ class ProductList extends Component {
         .then(response => response.json())
         .then(async resultData =>{
           console.log(resultData);
-          if(resultData.status === 'Success' && resultData.dispenseStatus === true){ 
-            console.log('Dispensing Finished');
-            this.setState({feedbackVisible:true,dispenseStatus:ORDER_DISPENSED});
-            //Alert.alert('Success', 'Get Your Drink', [{text: 'Thanks'}]);
-            BackgroundTimer.clearInterval(this.intervalId)
+          if(resultData.status === 'Success'){
+            if(resultData.orderStatus === 'InQueue'){ 
+              console.log('In-Queue')
+              console.log('Continue poll')
+            }
+            else if(resultData.orderStatus === 'WaitingToDispense'){
+              this.stopPoll()
+              console.log('WaitingToDispense');
+              console.log('Stopped poll for user to place the cup');
+              this.setState({orderStatus:PLACE_THE_CUP})
+              console.log(this.state.orderStatus)
+              //var orderId=this.state.orderId
+              this.timer = BackgroundTimer.setInterval(async () => {
+                this.setState({timer:(this.state.timer-1)})
+                console.log(this.state.timer)
+                if(this.state.timer === 0){
+                  BackgroundTimer.clearInterval(this.timer)
+                  this.setState({timer:30})
+                  this.setState({orderStatus:TIMEOUT_EXPIRED,orderId:null})
+                }
+              },1000)
+            }
+            else if(resultData.orderStatus === 'Dispensing'){
+              console.log('Dispensing')
+              console.log('Continue poll')
+            }
+            else if(resultData.orderStatus === 'Dispensed'){
+              console.log('Dispensed')
+              this.setState({feedbackVisible:true,orderStatus:ORDER_DISPENSED,orderId:null});
+              this.stopPoll()
+            }
+            else if(resultData.orderStatus === 'Cancelled'){
+              console.log('cancelled by server')
+              this.setState({orderStatus:ORDER_CANCELLED_BY_SERVER,orderId:null})
+            }
           }
           else{
-            console.log("Yet to be dispensed");
+            this.stopPoll()
+            this.setState({orderStatus:ORDER_STATUS_REQUEST_FAILED,orderId:null});
           }
+          console.log(this.state.orderStatus)
         })
         .catch(async e => {
-          BackgroundTimer.clearInterval(this.intervalId)
-          //alert('Unable to Dispense. Please Try Again or restart the app..!');
-          this.setState({dispenseStatus:UNABLE_TO_DISPENSE});
+          this.stopPoll()
+          this.setState({orderStatus:ORDER_STATUS_REQUEST_FAILED,orderId:null});
         })
     }, 5000);
-  };
+  }
   
-  getDispense = async productId => {
-    this.setState({dispenseStatus:ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE});
+  placeOrder = async productId => {
+    this.setState({orderStatus:ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE});
     console.log(productId);
-    fetch('http://' + ipaddress + ':9876/dispenseProduct', {
+    fetch('http://' + ipaddress + ':9876/order', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -292,19 +338,45 @@ class ProductList extends Component {
       .then(response => response.json())
       .then(async resultData => {
         if (resultData.status === 'Success') {
-          this.setState({dispenseStatus:ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE})
+          this.setState({orderStatus:ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE})
           console.log(resultData)
           console.log('ack');
-          await this.waitForDispense(resultData.orderId);
+          this.state.orderId = resultData.orderId
+          await this.startPoll();
         }
         else{
-          this.setState({dispenseStatus:UNABLE_TO_DISPENSE})
+          this.setState({orderStatus:ORDER_REQUEST_FAILED})
         }
       })
       .catch(async e => {
-        this.setState({dispenseStatus:UNABLE_TO_DISPENSE});
+        this.setState({orderStatus:ORDER_REQUEST_FAILED});
       });
   };
+
+  startDispense = async () => {
+    BackgroundTimer.clearInterval(this.timer)
+    this.setState({timer:30})
+    this.setState({ orderStatus:DISPENSING})
+    fetch('http://' + ipaddress + ":9876/dispense?orderId=" + this.state.orderId,{
+        headers:{
+          'tokenId':"secret",
+        }
+      })
+        .then(response => response.json())
+        .then(async resultData =>{
+          console.log(resultData)
+          if (resultData.status === 'Success'){
+            console.log("Dispense Starts")
+            this.startPoll()
+          }
+          else{
+            this.setState({orderStatus:DISPENSE_REQUEST_FAILED,orderId:null});
+          }
+        })
+        .catch(async e => {
+          this.setState({orderStatus:DISPENSE_REQUEST_FAILED,orderId:null});
+        });
+  }
 
   onStarRatingPress(rating) {
     console.log(rating)
@@ -328,7 +400,7 @@ class ProductList extends Component {
         :null}
 
         {/* Visible only when app is not connected with the machine */}
-        <Modal animationType="slide" onRequestClose={() => {BackHandler.exitApp()}} visible={(!this.state.isConnected) && (! this.state.splashScreenVisible)}>
+        <Modal onRequestClose={() => {BackHandler.exitApp()}} visible={(!this.state.isConnected) && (! this.state.splashScreenVisible)}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Image
@@ -395,7 +467,7 @@ class ProductList extends Component {
                     </Text>
                   </View>
                   <View style={{justifyContent:'center'}}>
-                    <TouchableOpacity onPress={()=>{this.setState({ modalVisible: !this.state.modalVisible,selectedIndex: index,dispenseStatus:BEFORE_PLACING_ORDER,starCount:0});}}>
+                    <TouchableOpacity onPress={()=>{this.setState({ modalVisible: !this.state.modalVisible,selectedIndex: index,orderStatus:BEFORE_PLACING_ORDER,starCount:0});}}>
                       <Icon name="circle-with-plus" size={35} style={{color: '#100A45'}} />
                   </TouchableOpacity>
                   </View>
@@ -410,10 +482,13 @@ class ProductList extends Component {
             animationType="slide"
             visible={this.state.modalVisible}
             onRequestClose={async () => {
-              if(this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE || this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE){
-                console.log("dispensing dont go back")
+              if(this.state.orderStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE 
+                || this.state.orderStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE
+                || this.state.orderStatus === PLACE_THE_CUP
+                || this.state.orderStatus === DISPENSING){
+                console.log("Please dont go back")
               }
-              else if(this.state.dispenseStatus === ORDER_DISPENSED){
+              else if(this.state.orderStatus === ORDER_DISPENSED){
                 this.onDisconnect()
               }
               else{
@@ -437,7 +512,7 @@ class ProductList extends Component {
                 </View>
                 <View style={{marginTop:20, justifyContent:'center',alignItems:'center'}}>
                   <Text style={{  color:'#6F6D6D',fontSize:10}}>Status</Text>
-                  <Text style={{ marginTop:5, color:'#100A45',fontSize:13}}>{this.state.dispenseStatus}</Text>
+                  <Text style={{ marginTop:5, color:'#100A45',fontSize:13}}>{this.state.orderStatus}</Text>
                 </View>
 
                 {/* */}
@@ -464,7 +539,32 @@ class ProductList extends Component {
                   </View>
                 : null}
 
-                { (this.state.dispenseStatus === BEFORE_PLACING_ORDER || this.state.dispenseStatus === UNABLE_TO_DISPENSE) ? 
+                {this.state.orderStatus === PLACE_THE_CUP ?
+                <View style={{}}>
+                  <View style={{marginTop:20,alignItems:'center',justifyContent:'center'}}>
+                    <Ionicons.Button
+                      name="ios-cafe"
+                      size={30}
+                      color="white"
+                      backgroundColor="#100A45"  
+                      onPress={async () => {
+                        this.startDispense()
+                      }}>
+                      Dispense
+                    </Ionicons.Button>
+                  </View>
+                  <View style={{marginTop:20,alignItems:'center',justifyContent:'center'}}>
+                    <Text style={{fontSize:10,fontFamily:'',color:'#6F6D6D'}}>Timeout: {this.state.timer}</Text>
+                  </View>
+                </View>
+                : null}
+
+                { (this.state.orderStatus === BEFORE_PLACING_ORDER 
+                || this.state.orderStatus === ORDER_REQUEST_FAILED
+                || this.state.orderStatus === ORDER_STATUS_REQUEST_FAILED
+                || this.state.orderStatus === DISPENSE_REQUEST_FAILED
+                || this.state.orderStatus === ORDER_CANCELLED_BY_SERVER
+                || this.state.orderStatus === TIMEOUT_EXPIRED) ? 
                   <View style={{width: '100%',flexDirection: 'row',justifyContent: 'space-around',marginTop: 20,}}>
                     <Icon.Button
                       name="cross"
@@ -478,25 +578,48 @@ class ProductList extends Component {
                       }}>
                       Cancel
                     </Icon.Button>
-                    <Ionicons.Button
-                      name="ios-cafe"
+                    <MaterialCommunityIcons.Button
+                      name="hand-pointing-up"
                       size={30}
                       color="white"
                       backgroundColor="#100A45"  
                       onPress={async () => {
-                        await this.getDispense(
+                        await this.placeOrder(
                           this.state.deviceProductList[this.state.selectedIndex]
                             .productId,
                         );
                       }}>
-                      Dispense
-                    </Ionicons.Button>
+                      Order
+                    </MaterialCommunityIcons.Button>
+                  </View> 
+                :null}
+                { (this.state.orderStatus === ORDER_REQUEST_FAILED
+                || this.state.orderStatus === ORDER_STATUS_REQUEST_FAILED
+                || this.state.orderStatus === DISPENSE_REQUEST_FAILED
+                || this.state.orderStatus === ORDER_CANCELLED_BY_SERVER
+                || this.state.orderStatus === TIMEOUT_EXPIRED) ? 
+                  <View style={{width: '50%',justifyContent: 'center',marginTop: 20,}}>
+                    <MaterialCommunityIcons.Button
+                      name="reload"
+                      size={30}
+                      color="white"
+                      backgroundColor="#100A45"
+                      onPress={async () => {
+                        this.onDisconnect();
+                      }}>
+                      Restart
+                    </MaterialCommunityIcons.Button>
                   </View> 
                 :null}
               </View>
             </View>
           </Modal>
         ) : null}
+        {/*<Modal animationType='slide' visible={this.state.orderStatus===DISPENSING} onRequestClose={()=>{console.log('do nothing');}}>
+          
+            <Image style ={{flex:1,alignSelf:'stretch',width:null,height:null}} source={require('../productImages/Cupshot3.jpg')}/>
+        
+                    </Modal>*/}
       </ScrollView>
     );
   }
@@ -587,7 +710,7 @@ export default ProductList;
                     {/*{this.state.orderReceived ? <Text style={styles.productName}>Order Received</Text> : null }
     
     */
-   /*{(! this.state.isConnected) && (! this.state.splashScreenVisible) ?*/    /* (this.state.dispenseStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.dispenseStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
+   /*{(! this.state.isConnected) && (! this.state.splashScreenVisible) ?*/    /* (this.state.orderStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.orderStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
                   
                   <Image
                   style={{width:'100%',height:}}
@@ -599,3 +722,8 @@ export default ProductList;
                         }
                   
                   */
+                 /*<TouchableHighlight underlayColor='#100A45' style={{ marginTop:20, width:120, height:40, borderRadius:5,backgroundColor:'#100A45',alignItems:'center',justifyContent:'center'}} onPress={() => {this.startDispense();}}>
+                  <Text style = {{color:'white'}}>
+                    Dispense
+                  </Text>
+                    </TouchableHighlight> */

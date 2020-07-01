@@ -15,7 +15,7 @@ import android.content.Context;
 import java.util.List;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiNetworkSuggestion;
-import android.net.wifi.WifiNetworkSuggestion.Builder;
+//import android.net.wifi.WifiNetworkSuggestion.Builder;
 
 import android.os.Build;
 import android.provider.Settings;
@@ -159,11 +159,6 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
             break;
           }           
         }
-        //Disconnect from current network if any
-        /*wifi.disconnect();
-        //Connect to the specific network
-        boolean enabled = wifi.enableNetwork(netId, true);
-        boolean connected = wifi.reconnect();*/
         promise.resolve(netId);
       }
     }catch(Exception e){
@@ -173,10 +168,6 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void isConnectedToGivenSSID(Promise promise) {
-    
-    //Intent intent = new Intent(WifiManager.EXTRA_NETWORK_INFO);
-    //NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-    //if (info.isConnected()){
     try{
       WifiInfo wifiInfo = wifi.getConnectionInfo();
       String ssid = wifiInfo.getSSID().replace("SSID: ","").replaceAll("\"","");
