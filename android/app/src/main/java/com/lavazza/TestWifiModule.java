@@ -82,7 +82,6 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void turnOffWifi(Promise promise){
     try {
-      //wifi.removeNetwork()
       wifi.setWifiEnabled(false);
       promise.resolve(true);
     } catch (Exception e) {
@@ -127,10 +126,8 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
           if (PREDEFINEDSSID.equals(ssid)){
             wifi.removeNetwork(i.networkId);
             wifi.saveConfiguration(); 
-            break; 
           } 
         }
-        //if(netId == -1){
         WifiConfiguration conf = new WifiConfiguration();
 
         conf.SSID = "\"" + PREDEFINEDSSID + "\"";
@@ -148,7 +145,6 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
       
         netId = wifi.addNetwork(conf);
         wifi.saveConfiguration();
-        //}
 
         List<WifiConfiguration> list1 = wifi.getConfiguredNetworks();
         for( WifiConfiguration i : list1 ) {
@@ -172,7 +168,7 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
       WifiInfo wifiInfo = wifi.getConnectionInfo();
       String ssid = wifiInfo.getSSID().replace("SSID: ","").replaceAll("\"","");
       if(PREDEFINEDSSID.equals(ssid)){
-        promise.resolve(ssid);
+        promise.resolve(true);
       }
       else{
         promise.resolve(false);
@@ -185,14 +181,14 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
   public void forgetNetwork(Promise promise) {
     try {
       List<WifiConfiguration> list = wifi.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-          String ssid = i.SSID.replace("SSID: ","").replaceAll("\"","");
-          if (PREDEFINEDSSID.equals(ssid)){
-            wifi.removeNetwork(i.networkId);
-            wifi.saveConfiguration(); 
-            promise.resolve(true);
-          } 
-        }
+      for( WifiConfiguration i : list ) {
+        String ssid = i.SSID.replace("SSID: ","").replaceAll("\"","");
+        if (PREDEFINEDSSID.equals(ssid)){
+          wifi.removeNetwork(i.networkId);
+          wifi.saveConfiguration(); 
+        } 
+      }
+      promise.resolve(true);
     } catch (Exception e) {
       promise.reject(e);
     }
@@ -202,10 +198,9 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
   public void getDefaultGatewayIp(Promise promise) {
     try{
       final DhcpInfo dhcp = wifi.getDhcpInfo();
-      //final String address = Formatter.formatIpAddress(dhcp.gateway);
       promise.resolve(dhcp.gateway);
     }catch(Exception e){
-      promise.resolve(e);
+      promise.reject(e);
     }
   }
 

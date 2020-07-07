@@ -1,4 +1,12 @@
 rootProject.name = 'lavazza'
+include ':react-native-pinch'
+project(':react-native-pinch').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-pinch/android')
+include ':react-native-cert-pinner'
+project(':react-native-cert-pinner').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-cert-pinner/android')
+include ':react-native-ssl-pinning'
+project(':react-native-ssl-pinning').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-ssl-pinning/android')
+include ':react-native-ssl-pinning'
+project(':react-native-ssl-pinning').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-ssl-pinning/android')
 include ':@react-native-community_masked-view'
 project(':@react-native-community_masked-view').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/masked-view/android')
 include ':react-native-safe-area-context'

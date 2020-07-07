@@ -95,6 +95,10 @@ target 'lavazza' do
 
   pod 'RNCMaskedView', :path => '../node_modules/@react-native-community/masked-view'
 
+  pod 'RNSslPinning', :path => '../node_modules/react-native-ssl-pinning'
+
+  pod 'CertPinner', :path => '../node_modules/react-native-cert-pinner'
+
   target 'lavazzaTests' do
     inherit! :complete
     # Pods for testing

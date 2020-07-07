@@ -4,6 +4,10 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.localz.PinchPackage;
+import com.criticalblue.reactnative.CertPinnerPackage;
+import com.toyberman.RNSslPinningPackage;
+import com.toyberman.RNSslPinningPackage;
 import org.reactnative.maskedview.RNCMaskedViewPackage;
 import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
 import com.swmansion.rnscreens.RNScreensPackage;
@@ -16,8 +20,9 @@ import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
-
+//import com.lavazza.CertificatePinningClientFactory;
 import com.lavazza.CustomToastPackage;
+//import com.facebook.react.modules.network.OkHttpClientProvider;
 
 // import com.reactlibrary.RNWifiPackage;
 
@@ -40,6 +45,7 @@ public class MainApplication extends Application implements ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
           packages.add(new CustomToastPackage());
+          
           return packages;
         }
 
@@ -47,6 +53,10 @@ public class MainApplication extends Application implements ReactApplication {
         // protected List<ReactPackage> getPackages() {
         // return Arrays.asList(
         //     new MainReactPackage(),
+            //new PinchPackage(),
+            //new CertPinnerPackage(),
+            
+            //new RNSslPinningPackage(),
             //new RNCMaskedViewPackage(),
             //new SafeAreaContextPackage(),
             //new RNScreensPackage(),
@@ -75,6 +85,7 @@ public class MainApplication extends Application implements ReactApplication {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
+    //OkHttpClientProvider.setOkHttpClientFactory(new CertificatePinningClientFactory());
   }
 
   /**
