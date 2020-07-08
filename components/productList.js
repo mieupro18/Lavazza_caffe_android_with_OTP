@@ -69,6 +69,7 @@ class ProductList extends Component {
       starCount: 0,
       deviceProductList: [],
       orderId: null,
+      orderedProductId: null,
       timer: 30,
       backgroundInactivityTimer: false,
       allProductListURL: [
@@ -109,6 +110,9 @@ class ProductList extends Component {
   }
 
   async componentDidMount() {
+    //AsyncStorage.removeItem('feedbackData');
+    //console.log(await AsyncStorage.getItem('feedbackData'))
+
     await this.sendFeedbackData();
     setTimeout(async () => {
       this.setState({
@@ -133,7 +137,7 @@ class ProductList extends Component {
         console.log('Disconnect from background');
         this.onDisconnect();
         this.setState({backgroundInactivityTimer: false});
-      }, 5000);
+      }, 120000);
       this.setState({backgroundInactivityTimer: true});
       console.log('Timeron :', this.state.backgroundInactivityTimer);
     } else if (state === 'active') {
@@ -150,7 +154,7 @@ class ProductList extends Component {
   sendFeedbackData = async () => {
     const netInfo = await NetInfo.fetch();
     console.log('Internet Connection :', netInfo.isInternetReachable);
-    const storedValue = await AsyncStorage.getItem('name'); //.then((value) => console.log(value))
+    const storedValue = JSON.parse(await AsyncStorage.getItem('feedbackData')); //.then((value) => console.log(value))
     console.log('Data :', storedValue);
   };
 
@@ -281,7 +285,6 @@ class ProductList extends Component {
             isConnecting: false,
           });
           AppState.addEventListener('change', this._handleAppStateChange);
-          // eslint-disable-next-line no-undef
         } else {
           console.log(
             'Disconnect from machine',
@@ -306,11 +309,47 @@ class ProductList extends Component {
       });
   };
 
+  checkForFeedbackVisibility = async productName => {
+    var feedbackTimeDetails = JSON.parse(
+      await AsyncStorage.getItem(productName),
+    );
+    console.log(feedbackTimeDetails);
+    if (feedbackTimeDetails === null) {
+      feedbackTimeDetails = {
+        lastFeedbackDisplayedTime: Date.parse(new Date()),
+        nextFeedbackInterval: 60000,
+      };
+      await AsyncStorage.setItem(
+        productName,
+        JSON.stringify(feedbackTimeDetails),
+      );
+      console.log(await AsyncStorage.getItem(productName));
+      return false;
+    }
+    const currentTime = Date.parse(new Date());
+    console.log(currentTime);
+    if (
+      currentTime - feedbackTimeDetails.lastFeedbackDisplayedTime >
+      feedbackTimeDetails.nextFeedbackInterval
+    ) {
+      feedbackTimeDetails.lastFeedbackDisplayedTime = currentTime;
+      feedbackTimeDetails.nextFeedbackInterval = 120000;
+      await AsyncStorage.setItem(
+        productName,
+        JSON.stringify(feedbackTimeDetails),
+      );
+      console.log(await AsyncStorage.getItem(productName));
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   stopPollForOrderStatus = async () => {
     BackgroundTimer.clearInterval(this.pollingIntervalId);
   };
 
-  startPollForOrderStatus = async () => {
+  startPollForOrderStatus = async productName => {
     this.pollingIntervalId = BackgroundTimer.setInterval(() => {
       fetch(
         'http://192.168.5.1:9876/orderStatus?orderId=' + this.state.orderId,
@@ -349,10 +388,15 @@ class ProductList extends Component {
               console.log('Dispensed');
               console.log(
                 'Disconnect from machine',
-                TestWifiModule.forgetNetwork(),
+                await TestWifiModule.forgetNetwork(),
               );
+              if (await this.checkForFeedbackVisibility(productName)) {
+                console.log('feedback visible');
+                this.setState({
+                  feedbackVisible: true,
+                });
+              }
               this.setState({
-                feedbackVisible: true,
                 orderStatus: ORDER_DISPENSED,
                 orderId: null,
               });
@@ -383,11 +427,11 @@ class ProductList extends Component {
     }, 5000);
   };
 
-  placeOrder = async productid => {
+  placeOrder = async (productId, productName) => {
     this.setState({
       orderStatus: ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
     });
-    console.log(productid);
+    console.log(productId);
     fetch('http://192.168.5.1:9876/order', {
       method: 'post',
       headers: {
@@ -395,7 +439,7 @@ class ProductList extends Component {
         tokenId: 'secret',
       },
       body: JSON.stringify({
-        productId: productid,
+        productId: productId,
         customerName: 'Arun',
       }),
     })
@@ -409,7 +453,7 @@ class ProductList extends Component {
           console.log(resultData);
           console.log('ack');
           this.state.orderId = resultData.orderId;
-          await this.startPollForOrderStatus();
+          await this.startPollForOrderStatus(productName);
         } else {
           this.setState({orderStatus: ORDER_REQUEST_FAILED});
         }
@@ -420,7 +464,7 @@ class ProductList extends Component {
       });
   };
 
-  startDispense = async () => {
+  startDispense = async productName => {
     BackgroundTimer.clearInterval(this.timer);
     this.setState({timer: 30});
     this.setState({orderStatus: DISPENSING});
@@ -434,7 +478,7 @@ class ProductList extends Component {
         console.log(resultData);
         if (resultData.status === 'Success') {
           console.log('Dispense Starts');
-          this.startPollForOrderStatus();
+          this.startPollForOrderStatus(productName);
         } else {
           this.setState({orderStatus: DISPENSE_REQUEST_FAILED, orderId: null});
         }
@@ -444,11 +488,23 @@ class ProductList extends Component {
       });
   };
 
-  onStarRatingPress(rating) {
+  async onStarRatingPress(rating, productName) {
     console.log(rating);
     this.setState({
       starCount: rating,
     });
+    var feedbackData = JSON.parse(await AsyncStorage.getItem('feedbackData'));
+    if (feedbackData === null) {
+      console.log('null');
+      feedbackData = {};
+    }
+    feedbackData[productName] = {
+      rating: rating,
+      timeStamp: Date.parse(new Date()),
+      machineName: 'machine1',
+    };
+    AsyncStorage.setItem('feedbackData', JSON.stringify(feedbackData));
+    console.log(await AsyncStorage.getItem('feedbackData'));
   }
 
   render() {
@@ -520,18 +576,21 @@ class ProductList extends Component {
         {this.state.isConnected ? (
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
               backgroundColor: '#100A45',
               height: 50,
+              justifyContent: 'center',
             }}>
-            <View style={{marginLeft: 35, justifyContent: 'center'}}>
-              <Text
-                style={{color: '#ffffff', fontWeight: 'bold', fontSize: 15}}>
-                Menu
-              </Text>
-            </View>
-            <View style={{marginRight: 20, justifyContent: 'center'}}>
+            <Text
+              style={{
+                marginLeft: 30,
+                color: '#ffffff',
+                fontWeight: 'bold',
+                fontSize: 15,
+              }}>
+              LavAzza
+            </Text>
+
+            {/*<View style={{marginRight: 20, justifyContent: 'center'}}>
               <Icon
                 name="menu"
                 size={30}
@@ -540,7 +599,7 @@ class ProductList extends Component {
                   console.log('pressed');
                 }}
               />
-            </View>
+            </View>*/}
           </View>
         ) : null}
         {this.state.deviceProductList.map((product, index) => {
@@ -664,26 +723,35 @@ class ProductList extends Component {
                         fullStarColor="#100A45"
                         halfStarEnabled={false}
                         rating={this.state.starCount}
-                        selectedStar={rating => this.onStarRatingPress(rating)}
+                        selectedStar={rating =>
+                          this.onStarRatingPress(
+                            rating,
+                            this.state.deviceProductList[
+                              this.state.selectedIndex
+                            ].productName,
+                          )
+                        }
                       />
                     </View>
-                    <TouchableHighlight
-                      underlayColor="#100A45"
-                      style={{
-                        marginTop: 20,
-                        width: 100,
-                        height: 40,
-                        borderRadius: 5,
-                        backgroundColor: '#100A45',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onPress={() => {
-                        this.onDisconnect();
-                      }}>
-                      <Text style={{color: 'white'}}>Done</Text>
-                    </TouchableHighlight>
                   </View>
+                ) : null}
+                {this.state.orderStatus === ORDER_DISPENSED ? (
+                  <TouchableHighlight
+                    underlayColor="#100A45"
+                    style={{
+                      marginTop: 20,
+                      width: 100,
+                      height: 40,
+                      borderRadius: 5,
+                      backgroundColor: '#100A45',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onPress={() => {
+                      this.onDisconnect();
+                    }}>
+                    <Text style={{color: 'white'}}>Done</Text>
+                  </TouchableHighlight>
                 ) : null}
 
                 {this.state.orderStatus === PLACE_THE_CUP ? (
@@ -700,7 +768,11 @@ class ProductList extends Component {
                         color="white"
                         backgroundColor="#100A45"
                         onPress={async () => {
-                          this.startDispense();
+                          this.startDispense(
+                            this.state.deviceProductList[
+                              this.state.selectedIndex
+                            ].productName,
+                          );
                         }}>
                         Dispense
                       </Ionicons.Button>
@@ -757,6 +829,8 @@ class ProductList extends Component {
                         await this.placeOrder(
                           this.state.deviceProductList[this.state.selectedIndex]
                             .productId,
+                          this.state.deviceProductList[this.state.selectedIndex]
+                            .productName,
                         );
                       }}>
                       Order
@@ -860,6 +934,7 @@ const styles = StyleSheet.create({
 });
 
 export default ProductList;
+
 /* (this.state.orderStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.orderStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
                   <Image
                   style={{width:'100%',height:}}

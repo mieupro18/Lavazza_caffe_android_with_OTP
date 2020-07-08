@@ -33,8 +33,8 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
 
   private static final String DURATION_SHORT_KEY = "SHORT";
   private static final String DURATION_LONG_KEY = "LONG";
-  private static final String PREDEFINEDSSID = "MyPiAP";
-  private static final String PREDEFINEDPASSWORD = "raspberry";
+  private static final String PREDEFINEDSSID = "lavazza";
+  private static final String PREDEFINEDPASSWORD = "lavazza@123";
 
   public TestWifiModule(ReactApplicationContext reactContext) {
     super(reactContext);

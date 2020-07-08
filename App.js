@@ -13,6 +13,7 @@ import {View} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
 import {Root} from 'native-base';
+import registerScreen from './components/registerScreen';
 //import TestWifiModule from './components/TestWifiModule';
 //import StarRating from 'react-native-star-rating';
 //import { Rating, AirbnbRating } from 'react-native-ratings';
@@ -54,7 +55,7 @@ const App = () => {
       <Stack.Navigator initialRouteName="Lavazza" headerMode="none">
         <Stack.Screen
           name="Lavazza"
-          component={ProductList}
+          component={registerScreen}
           options={{
             headerShown: false,
           }}
