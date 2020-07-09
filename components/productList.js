@@ -59,9 +59,6 @@ class ProductList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isConnected: false,
-      splashScreenVisible: true,
-      isConnecting: false,
       selectedIndex: 0,
       modalVisible: false,
       feedbackVisible: false,
@@ -69,7 +66,6 @@ class ProductList extends Component {
       starCount: 0,
       deviceProductList: [],
       orderId: null,
-      orderedProductId: null,
       timer: 30,
       backgroundInactivityTimer: false,
       allProductListURL: [
@@ -110,24 +106,13 @@ class ProductList extends Component {
   }
 
   async componentDidMount() {
-    //AsyncStorage.removeItem('feedbackData');
-    //console.log(await AsyncStorage.getItem('feedbackData'))
-
-    await this.sendFeedbackData();
-    setTimeout(async () => {
-      this.setState({
-        splashScreenVisible: false,
-      });
-      await this.askForUserPermissions();
-      console.log('crossed permission access stage');
-    }, 3000);
+    //console.log('hi',this.props.route.params.name);
+    AppState.addEventListener('change', this._handleAppStateChange);
+    this.showProductList(this.props.route.params.productList);
   }
 
   async componentWillUnmount() {
-    this.onDisconnect();
-    if (this.state.backgroundInactivityTimer === true) {
-      BackgroundTimer.clearTimeout(this.backgroundInactivityTimer);
-    }
+    this.disconnectFromMachine();
   }
 
   _handleAppStateChange = async state => {
@@ -135,9 +120,10 @@ class ProductList extends Component {
       console.log(state);
       this.backgroundInactivityTimer = BackgroundTimer.setTimeout(async () => {
         console.log('Disconnect from background');
-        this.onDisconnect();
+        this.disconnectFromMachine();
+        this.props.navigation.goBack();
         this.setState({backgroundInactivityTimer: false});
-      }, 120000);
+      }, 5000);
       this.setState({backgroundInactivityTimer: true});
       console.log('Timeron :', this.state.backgroundInactivityTimer);
     } else if (state === 'active') {
@@ -151,78 +137,7 @@ class ProductList extends Component {
     }
   };
 
-  sendFeedbackData = async () => {
-    const netInfo = await NetInfo.fetch();
-    console.log('Internet Connection :', netInfo.isInternetReachable);
-    const storedValue = JSON.parse(await AsyncStorage.getItem('feedbackData')); //.then((value) => console.log(value))
-    console.log('Data :', storedValue);
-  };
-
-  onConnect = async () => {
-    TestWifiModule.isWifiTurnedOn()
-      .then(async enabled => {
-        if (!enabled) {
-          console.log(await TestWifiModule.turnOnWifi());
-        }
-        console.log(await TestWifiModule.connectToCoffeeMachine());
-        setTimeout(async () => {
-          console.log('Connection check');
-          const connected = await TestWifiModule.isConnectedToGivenSSID();
-          console.log(connected);
-          if (connected) {
-            var ip = await TestWifiModule.getDefaultGatewayIp();
-            // eslint-disable-next-line no-bitwise
-            var firstByte = ip & 255;
-            // eslint-disable-next-line no-bitwise
-            var secondByte = (ip >> 8) & 255;
-            // eslint-disable-next-line no-bitwise
-            var thirdByte = (ip >> 16) & 255;
-            // eslint-disable-next-line no-bitwise
-            var fourthByte = (ip >> 24) & 255;
-            ipaddress =
-              firstByte + '.' + secondByte + '.' + thirdByte + '.' + fourthByte;
-            console.log(ipaddress);
-            this.getProductInfo();
-          } else {
-            console.log('Connection to the coffee machine failed');
-            console.log(
-              'Disconnect from machine',
-              await TestWifiModule.forgetNetwork(),
-            );
-            this.setState({isConnecting: false});
-            Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-              {text: 'Okay'},
-            ]);
-          }
-        }, 3000);
-      })
-      .catch(async e => {
-        console.log(e);
-        console.log(
-          'Disconnect from machine',
-          await TestWifiModule.forgetNetwork(),
-        );
-        this.setState({isConnecting: false});
-        Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-          {text: 'Okay'},
-        ]);
-      });
-    //this.getProductInfo();
-  };
-
-  onDisconnect = async () => {
-    this.setState({
-      deviceProductList: [],
-      isConnected: false,
-    });
-    this.setState({
-      modalVisible: false,
-      feedbackVisible: false,
-      selectedIndex: 0,
-      orderId: null,
-      orderStatus: null,
-      starCount: 0,
-    });
+  disconnectFromMachine = async () => {
     AppState.removeEventListener('change', this._handleAppStateChange);
     if (TestWifiModule.isConnectedToGivenSSID()) {
       console.log(
@@ -232,81 +147,19 @@ class ProductList extends Component {
     }
   };
 
-  askForUserPermissions = async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Wifi networks',
-          message: 'We need your permission in order to find wifi networks',
-        },
+  showProductList = async produtList => {
+    console.log('show Product list');
+    let deviceProductList = [];
+    await produtList.map(async product => {
+      let filterProduct = this.state.allProductListURL.find(
+        allproduct => allproduct.productName === product.productName,
       );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Thank you for your permission! :)');
-      } else {
-        this.setState({isConnecting: false});
-        Alert.alert(
-          'Info',
-          'Please provide location permission to access the app',
-          [{text: 'Okay'}],
-        );
-      }
-    } catch (err) {
-      this.setState({isConnecting: false});
-      console.warn(err);
-      Alert.alert('Info', 'Please restart the app', [
-        {text: 'Close app', onPress: () => BackHandler.exitApp()},
-      ]);
-    }
-  };
-
-  getProductInfo = async () => {
-    console.log('get Product Info');
-    fetch('http://192.168.5.1:9876/getProductInfo', {
-      headers: {
-        tokenId: 'secret',
-      },
-    })
-      .then(response => response.json())
-      .then(async resultData => {
-        console.log(resultData);
-        if (resultData.status === 'Success') {
-          let deviceProductList = [];
-          await resultData.data.map(async product => {
-            let filterProduct = this.state.allProductListURL.find(
-              allproduct => allproduct.productName === product.productName,
-            );
-            filterProduct.productId = product.productId;
-            deviceProductList.push(filterProduct);
-          });
-          this.setState({
-            deviceProductList: deviceProductList,
-            isConnected: true,
-            isConnecting: false,
-          });
-          AppState.addEventListener('change', this._handleAppStateChange);
-        } else {
-          console.log(
-            'Disconnect from machine',
-            await TestWifiModule.forgetNetwork(),
-          );
-          this.setState({isConnecting: false});
-          Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-            {text: 'Okay'},
-          ]);
-        }
-      })
-      .catch(async e => {
-        console.log(
-          'Disconnect from machine',
-          await TestWifiModule.forgetNetwork(),
-        );
-        this.setState({isConnecting: false});
-        Alert.alert('Info', 'Network error...Please reconnect', [
-          {text: 'Okay'},
-        ]);
-        console.log(e);
-      });
+      filterProduct.productId = product.productId;
+      deviceProductList.push(filterProduct);
+    });
+    this.setState({
+      deviceProductList: deviceProductList,
+    });
   };
 
   checkForFeedbackVisibility = async productName => {
@@ -386,10 +239,7 @@ class ProductList extends Component {
               console.log('Continue poll');
             } else if (resultData.orderStatus === 'Dispensed') {
               console.log('Dispensed');
-              console.log(
-                'Disconnect from machine',
-                await TestWifiModule.forgetNetwork(),
-              );
+              this.disconnectFromMachine();
               if (await this.checkForFeedbackVisibility(productName)) {
                 console.log('feedback visible');
                 this.setState({
@@ -510,98 +360,24 @@ class ProductList extends Component {
   render() {
     return (
       <ScrollView style={{flexGrow: 1}}>
-        {/* Visible for 3 seconds only when app opens*/}
-        {this.state.splashScreenVisible ? (
-          <View style={styles.logoContainer}>
-            <Image
-              style={styles.logo}
-              source={require('../productImages/Lavazza.png')}
-            />
-          </View>
-        ) : null}
+        <View
+          style={{
+            backgroundColor: '#100A45',
+            height: 50,
 
-        {/* Visible only when app is not connected with the machine */}
-        <Modal
-          onRequestClose={() => {
-            if (this.state.isConnecting === false) {
-              BackHandler.exitApp();
-            }
-          }}
-          visible={!this.state.isConnected && !this.state.splashScreenVisible}>
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Image
-                style={{width: 150, height: 75}}
-                source={require('../productImages/Lavazza.png')}
-              />
-              <View
-                style={{borderRadius: 125, overflow: 'hidden', marginTop: 20}}>
-                <Image
-                  style={{width: 250, height: 250}}
-                  source={require('../productImages/connect.gif')}
-                />
-              </View>
-              {this.state.isConnecting ? (
-                <View style={{flexDirection: 'row', marginTop: 20}}>
-                  <ActivityIndicator size="small" color="#100A45" />
-                  <Text style={{color: '#100A45', fontWeight: 'bold'}}>
-                    Connecting...!
-                  </Text>
-                </View>
-              ) : (
-                <View style={{alignItems: 'center', marginTop: 20}}>
-                  <TouchableHighlight
-                    underlayColor="#100A45"
-                    style={{
-                      width: 100,
-                      height: 40,
-                      borderRadius: 5,
-                      backgroundColor: '#100A45',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    onPress={() => {
-                      this.setState({isConnecting: true});
-                      this.onConnect();
-                    }}>
-                    <Text style={{color: 'white'}}>Connect</Text>
-                  </TouchableHighlight>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
-
-        {/* Visible when app connected to the machine */}
-        {this.state.isConnected ? (
-          <View
+            justifyContent:'center',
+            
+          }}>
+          <Text
             style={{
-              backgroundColor: '#100A45',
-              height: 50,
-              justifyContent: 'center',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              marginLeft:50,
+              fontSize: 15,
             }}>
-            <Text
-              style={{
-                marginLeft: 30,
-                color: '#ffffff',
-                fontWeight: 'bold',
-                fontSize: 15,
-              }}>
-              LavAzza
-            </Text>
-
-            {/*<View style={{marginRight: 20, justifyContent: 'center'}}>
-              <Icon
-                name="menu"
-                size={30}
-                color="#ffffff"
-                onPress={async () => {
-                  console.log('pressed');
-                }}
-              />
-            </View>*/}
-          </View>
-        ) : null}
+            LAVAZZA
+          </Text>
+        </View>
         {this.state.deviceProductList.map((product, index) => {
           return (
             <Card key={index}>
@@ -614,7 +390,7 @@ class ProductList extends Component {
                   }}>
                   <View>
                     <Image
-                      style={{width: 75, height: 75, borderRadius: 75 / 2}}
+                      style={{width: 75, height: 75, borderRadius:20}}
                       source={product.src}
                     />
                   </View>
@@ -652,7 +428,6 @@ class ProductList extends Component {
             </Card>
           );
         })}
-
         {this.state.deviceProductList.length > 0 ? (
           <Modal
             animationType="slide"
@@ -668,7 +443,7 @@ class ProductList extends Component {
               ) {
                 console.log('Please dont go back');
               } else if (this.state.orderStatus === ORDER_DISPENSED) {
-                this.onDisconnect();
+                this.disconnectFromMachine();
               } else {
                 this.setState({modalVisible: false, feedbackVisible: false});
               }
@@ -748,7 +523,7 @@ class ProductList extends Component {
                       justifyContent: 'center',
                     }}
                     onPress={() => {
-                      this.onDisconnect();
+                      this.props.navigation.goBack();
                     }}>
                     <Text style={{color: 'white'}}>Done</Text>
                   </TouchableHighlight>
@@ -854,7 +629,8 @@ class ProductList extends Component {
                       color="white"
                       backgroundColor="#100A45"
                       onPress={async () => {
-                        this.onDisconnect();
+                        await this.disconnectFromMachine();
+                        this.props.navigation.goBack();
                       }}>
                       Restart
                     </MaterialCommunityIcons.Button>

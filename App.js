@@ -9,11 +9,10 @@
 import React, {Component} from 'react';
 
 import ProductList from './components/productList';
-import {View} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import {Root} from 'native-base';
-import registerScreen from './components/registerScreen';
+//import registerScreen from './components/registerScreen';
+import connectingScreen from './components/connectingScreen';
 //import TestWifiModule from './components/TestWifiModule';
 //import StarRating from 'react-native-star-rating';
 //import { Rating, AirbnbRating } from 'react-native-ratings';
@@ -52,10 +51,17 @@ export default App;*/
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Lavazza" headerMode="none">
+      <Stack.Navigator initialRouteName="connectingScreen" headerMode="none">
         <Stack.Screen
-          name="Lavazza"
-          component={registerScreen}
+          name="connectingScreen"
+          component={connectingScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="productList"
+          component={ProductList}
           options={{
             headerShown: false,
           }}
