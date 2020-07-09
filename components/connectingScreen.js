@@ -18,7 +18,6 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
 import TestWifiModule from './TestWifiModule';
 import {TextInput, ScrollView} from 'react-native-gesture-handler';
-import App from '../App';
 
 export default class connectingScreen extends Component {
   constructor(props) {
@@ -271,59 +270,19 @@ export default class connectingScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  logo: {
-    width: 200,
-    height: 100,
-  },
-  logoContainer: {
-    //flex:1,
-    justifyContent: 'center',
-    marginTop: '50%',
-    alignItems: 'center',
-  },
-  header: {
-    height: 50,
-    justifyContent: 'center',
-    /*alignItems: 'center',*/
-    backgroundColor: '#b85400',
-  },
-  headerText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginLeft: 50,
-  },
+    logo: {
+        width: 200,
+        height: 100,
+      },
+      logoContainer: {
+        //flex: 1,
+        justifyContent: 'center',
+        marginTop: '50%',
+        alignItems: 'center',
+      },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  restrictedAccessButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  productName: {
-    textShadowColor: '#100A45',
-    //textShadowOffset: {width: -1, height: 1},
-    //textShadowRadius: 10,
-    //fontFamily: 'TimesNewroman',
-    fontSize: 15,
-    fontWeight: 'bold',
-    //flexWrap: 'wrap',
-
-    color: '#100A45',
   },
 });

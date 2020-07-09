@@ -364,15 +364,14 @@ class ProductList extends Component {
           style={{
             backgroundColor: '#100A45',
             height: 50,
-
-            justifyContent:'center',
-            
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
           <Text
             style={{
               color: '#ffffff',
               fontWeight: 'bold',
-              marginLeft:50,
+
               fontSize: 15,
             }}>
             LAVAZZA
@@ -390,7 +389,7 @@ class ProductList extends Component {
                   }}>
                   <View>
                     <Image
-                      style={{width: 75, height: 75, borderRadius:20}}
+                      style={{width: 75, height: 75, borderRadius: 20}}
                       source={product.src}
                     />
                   </View>
@@ -450,6 +449,10 @@ class ProductList extends Component {
             }}>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+                <Image
+                  style={{width: 150, height: 75}}
+                  source={require('../productImages/Lavazza.png')}
+                />
                 <View>
                   <Image
                     style={{width: 75, height: 75, borderRadius: 150 / 2}}

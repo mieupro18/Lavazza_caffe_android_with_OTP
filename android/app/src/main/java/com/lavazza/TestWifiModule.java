@@ -167,7 +167,8 @@ public class TestWifiModule extends ReactContextBaseJavaModule {
     try{
       WifiInfo wifiInfo = wifi.getConnectionInfo();
       String ssid = wifiInfo.getSSID().replace("SSID: ","").replaceAll("\"","");
-      if(PREDEFINEDSSID.equals(ssid)){
+      int id = wifiInfo.getNetworkId();
+      if(id != -1 && ssid.equals(PREDEFINEDSSID)){
         promise.resolve(true);
       }
       else{
