@@ -222,7 +222,6 @@ class ProductList extends Component {
               this.setState({
                 orderStatusCode: ORDER_DISPENSED,
                 orderId: null,
-                orderNumberVisible: false,
               });
             } else if (resultData.orderStatus === 'Machine is not Ready') {
               console.log('not ready');
