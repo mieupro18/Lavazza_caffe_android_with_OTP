@@ -99,6 +99,8 @@ target 'lavazza' do
 
   pod 'CertPinner', :path => '../node_modules/react-native-cert-pinner'
 
+  pod 'RNCPicker', :path => '../node_modules/@react-native-community/picker'
+
   target 'lavazzaTests' do
     inherit! :complete
     # Pods for testing

@@ -13,5 +13,8 @@ module.exports = {
         inlineRequires: false,
       },
     }),
+    /*getTransformModulePath: () => {
+      return require.resolve('./transformer');
+    },*/
   },
 };

@@ -11,7 +11,6 @@ import React, {Component} from 'react';
 import ProductList from './components/productList';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import registerScreen from './components/registerScreen';
 import connectingScreen from './components/connectingScreen';
 //import registerScreen from './components/registerScreen';
 //import TestWifiModule from './components/TestWifiModule';
@@ -53,13 +52,6 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="connectingScreen" headerMode="none">
-        <Stack.Screen
-          name="registerScreen"
-          component={registerScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
         <Stack.Screen
           name="connectingScreen"
           component={connectingScreen}

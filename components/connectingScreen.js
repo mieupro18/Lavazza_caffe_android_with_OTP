@@ -5,19 +5,15 @@ import {
   Image,
   View,
   TouchableHighlight,
-  Modal,
-  PermissionsAndroid,
   Alert,
   ActivityIndicator,
-  BackHandler,
   AppState,
-  DeviceEventEmitter,
+  Text,
 } from 'react-native';
-import {Text} from 'native-base';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
 import TestWifiModule from './TestWifiModule';
-import {TextInput, ScrollView} from 'react-native-gesture-handler';
+import BackgroundTimer from 'react-native-background-timer';
 
 export default class connectingScreen extends Component {
   constructor(props) {
@@ -25,7 +21,7 @@ export default class connectingScreen extends Component {
     this.state = {
       splashScreenVisible: true,
       isConnecting: false,
-      modalVisible: false,
+      isbackgroundTimerOn: false,
     };
   }
 
@@ -34,144 +30,90 @@ export default class connectingScreen extends Component {
     console.log('Internet Connection :', netInfo.isInternetReachable);
     const storedValue = JSON.parse(await AsyncStorage.getItem('feedbackData')); //.then((value) => console.log(value))
     console.log('Data :', storedValue);
-  };
-
-  async componentDidMount() {
-    await this.sendFeedbackData();
-    setTimeout(async () => {
-      this.setState({
-        splashScreenVisible: false,
-        modalVisible: true,
-      });
-      await this.askForUserPermissions();
-      console.log('crossed permission access stage');
-    }, 3000);
-  }
-
-  async componentWillUnmount() {
-    BackHandler.removeEventListener(
-      'hardwareBackPress',
-      this.hardwarebackButtonHandler,
-    );
-    AppState.removeEventListener('change', this.handleAppStateChange);
-  }
-
-  askForUserPermissions = async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Wifi networks',
-          message: 'We need your permission in order to find wifi networks',
-        },
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Thank you for your permission! :)');
-      } else {
-        Alert.alert(
-          'Info',
-          'Please provide location permission to access the app',
-          [{text: 'Okay'}],
-        );
-      }
-    } catch (err) {
-      console.warn(err);
-      Alert.alert('Info', 'Please restart the app', [
-        {text: 'Close app', onPress: () => BackHandler.exitApp()},
-      ]);
-    }
-  };
-
-  hardwarebackButtonHandler = async () => {
-    if (this.state.isConnecting === true) {
-      console.log('please dont go back');
-    }
+    return true;
   };
 
   handleAppStateChange = async state => {
     if (state === 'background') {
-      console.log('background');
-      //await TestWifiModule.forgetNetwork();
-      /*if (this.state.isConnecting === true) {
-        console.log('yeah');
-        await TestWifiModule.forgetNetwork();
-        this.exitApp();
-      }*/
+      this.intervalId = BackgroundTimer.setInterval(async () => {
+        if (await this.sendFeedbackData()) {
+          BackgroundTimer.clearInterval(this.intervalId);
+        }
+      }, 5000);
+    } else if (state === 'active') {
+      if (this.state.isbackgroundTimerOn === true) {
+        BackgroundTimer.clearInterval(this.intervalId);
+        this.setState({isbackgroundTimerOn: false});
+      }
     }
   };
+  async componentDidMount() {
+    AppState.addEventListener('change', this.handleAppStateChange);
+    await this.sendFeedbackData();
+    setTimeout(async () => {
+      this.setState({
+        splashScreenVisible: false,
+      });
+    }, 3000);
+  }
 
-  removeRegisteredEventListener = async () => {
-    BackHandler.removeEventListener(
-      'hardwareBackPress',
-      this.hardwarebackButtonHandler,
-    );
-    AppState.removeEventListener('change', this.handleAppStateChange);
-  };
+  async componentWillUnmount() {
+    AppState.removeEventListener('change');
+  }
 
   onConnect = async () => {
-    BackHandler.addEventListener(
-      'hardwareBackPress',
-      this.hardwarebackButtonHandler,
-    );
-    AppState.addEventListener('change', this.handleAppStateChange);
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
         if (!enabled) {
-          console.log(await TestWifiModule.turnOnWifi());
+          Alert.alert(
+            '',
+            'Please check your connection with the lavazza caffe macine',
+            [{text: 'ok'}],
+          );
+          this.setState({isConnecting: false});
+        } else {
+          this.getProductInfo();
         }
-        console.log(await TestWifiModule.connectToCoffeeMachine());
-        setTimeout(async () => {
-          console.log('Connection check');
-          const connected = await TestWifiModule.isConnectedToGivenSSID();
-          console.log(connected);
-          if (connected) {
-            var ip = await TestWifiModule.getDefaultGatewayIp();
-            // eslint-disable-next-line no-bitwise
-            var firstByte = ip & 255;
-            // eslint-disable-next-line no-bitwise
-            var secondByte = (ip >> 8) & 255;
-            // eslint-disable-next-line no-bitwise
-            var thirdByte = (ip >> 16) & 255;
-            // eslint-disable-next-line no-bitwise
-            var fourthByte = (ip >> 24) & 255;
-            var ipaddress =
-              firstByte + '.' + secondByte + '.' + thirdByte + '.' + fourthByte;
-            console.log(ipaddress);
-            this.getProductInfo();
-          } else {
-            console.log('Connection to the coffee machine failed');
-            console.log(
-              'Disconnect from machine',
-              await TestWifiModule.forgetNetwork(),
-            );
-            this.setState({isConnecting: false});
-            Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-              {text: 'Okay'},
-            ]);
-            this.removeRegisteredEventListener();
-          }
-        }, 3000);
       })
       .catch(async e => {
         console.log(e);
-        console.log(
-          'Disconnect from machine',
-          await TestWifiModule.forgetNetwork(),
-        );
         this.setState({isConnecting: false});
-        Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-          {text: 'Okay'},
+        Alert.alert('', 'Something Went Wrong...Please restart the app', [
+          {text: 'Ok'},
         ]);
-        this.removeRegisteredEventListener();
       });
+  };
+
+  getTimeoutSignal = async () => {
+    // eslint-disable-next-line no-undef
+    const controller = new AbortController();
+    setTimeout(() => {
+      controller.abort();
+    }, 5000);
+    return controller;
   };
 
   getProductInfo = async () => {
     console.log('get Product Info');
-    fetch('http://192.168.5.1:9876/getProductInfo', {
+    /*const temp = [
+      {productId: 106, productName: 'Cappuccino'},
+      {productId: 101, productName: 'South Indian Coffee Light'},
+      {productId: 104, productName: 'Milk'},
+      {productId: 107, productName: 'South Indian Coffee Strong'},
+      {productId: 102, productName: 'Espresso'},
+      {productId: 108, productName: 'Tea Milk'},
+      {productId: 105, productName: 'Tea Water'},
+      {productId: 103, productName: 'Lemon Tea'},
+    ];
+    this.props.navigation.navigate('productList', {
+      productList: temp,
+    });
+    this.setState({isConnecting: false});*/
+    fetch('http://192.168.5.1:9876/productInfo', {
       headers: {
         tokenId: 'secret',
       },
+      signal: (await this.getTimeoutSignal()).signal,
     })
       .then(response => response.json())
       .then(async resultData => {
@@ -179,34 +121,26 @@ export default class connectingScreen extends Component {
         if (resultData.status === 'Success') {
           this.props.navigation.navigate('productList', {
             productList: resultData.data,
+            machineName: resultData.machineName,
           });
           setTimeout(() => {
-            this.removeRegisteredEventListener();
             this.setState({isConnecting: false});
           }, 1000);
         } else {
-          console.log(
-            'Disconnect from machine',
-            await TestWifiModule.forgetNetwork(),
-          );
-          Alert.alert('Info', 'Something Went Wrong...Please reconnect', [
-            {text: 'Okay'},
+          Alert.alert('', 'Something Went Wrong...Please reconnect', [
+            {text: 'Ok'},
           ]);
-          this.removeRegisteredEventListener();
           this.setState({isConnecting: false});
         }
       })
       .catch(async e => {
-        console.log(
-          'Disconnect from machine',
-          await TestWifiModule.forgetNetwork(),
+        Alert.alert(
+          '',
+          'Please check your connection with the lavazza caffe macine',
+          [{text: 'ok'}],
         );
-        Alert.alert('Info', 'Network error...Please reconnect', [
-          {text: 'Okay'},
-        ]);
         console.log(e);
         this.setState({isConnecting: false});
-        this.removeRegisteredEventListener();
       });
   };
 
@@ -217,22 +151,21 @@ export default class connectingScreen extends Component {
           <View style={styles.logoContainer}>
             <Image
               style={styles.logo}
-              source={require('../productImages/Lavazza.png')}
+              source={require('../assets/lavazza_logo_with_year.png')}
             />
           </View>
-        ) : null}
-
-        {this.state.modalVisible ? (
+        ) : (
           <View style={styles.centeredView}>
             <Image
-              style={{width: 150, height: 75}}
-              source={require('../productImages/Lavazza.png')}
+              style={{height: 100, resizeMode: 'contain'}}
+              source={require('../assets/lavazza_logo_with_year.png')}
             />
+
             <View
-              style={{borderRadius: 125, overflow: 'hidden', marginTop: 20}}>
+              style={{borderRadius: 125, overflow: 'hidden', marginTop: 10}}>
               <Image
                 style={{width: 250, height: 250}}
-                source={require('../productImages/connect.gif')}
+                source={require('../assets/connect.gif')}
               />
             </View>
             {this.state.isConnecting ? (
@@ -263,23 +196,24 @@ export default class connectingScreen extends Component {
               </View>
             )}
           </View>
-        ) : null}
+        )}
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-    logo: {
-        width: 200,
-        height: 100,
-      },
-      logoContainer: {
-        //flex: 1,
-        justifyContent: 'center',
-        marginTop: '50%',
-        alignItems: 'center',
-      },
+  logo: {
+    width: '50%',
+    height: '75%',
+    resizeMode: 'contain',
+  },
+  logoContainer: {
+    height: 150,
+    justifyContent: 'center',
+    marginTop: '50%',
+    alignItems: 'center',
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
