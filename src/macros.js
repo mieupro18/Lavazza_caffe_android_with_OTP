@@ -1,7 +1,11 @@
 // SERVER INFO
-const IPADDRESS = '34.69.233.245';
+const IPADDRESS = '192.168.5.1';
 const HTTPS = 'http';
 const PORT = '9876';
+
+// FEEDBACK INTERVAL TIME
+const initialFeedbackInterval = 60000;
+const routineFeedbackInterval = 120000;
 
 // ORDER POSITIVE STATUS CODE
 const BEFORE_PLACING_ORDER = 0;
@@ -20,9 +24,9 @@ const orderStatus = {
   0: 'Order your Beverage',
   1: 'Please wait !',
   2: 'Order received\n  Please wait !',
-  3: '     Click dispense\nafter placing the cup',
+  3: 'Place the cup and\n   Click dispense',
   4: 'Dispensing !',
-  5: 'Beverage dispensed !',
+  5: 'Beverage dispensed\nEnjoy your Beverage !',
   6: '     Something went wrong\nPlease check the connection',
   7: 'Timeout Expired',
   8: 'Machine not ready',
@@ -42,4 +46,6 @@ export {
   TIMEOUT_EXPIRED,
   MACHINE_NOT_READY,
   orderStatus,
+  initialFeedbackInterval,
+  routineFeedbackInterval,
 };

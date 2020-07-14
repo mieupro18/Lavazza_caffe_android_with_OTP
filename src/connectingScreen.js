@@ -26,31 +26,61 @@ export default class connectingScreen extends Component {
     };
   }
 
-  sendFeedbackData = async () => {
+  sendFeedbackData = async feedbackData => {
     const netInfo = await NetInfo.fetch();
     console.log('Internet Connection :', netInfo.isInternetReachable);
-    const storedValue = JSON.parse(await AsyncStorage.getItem('feedbackData')); //.then((value) => console.log(value))
-    console.log('Data :', storedValue);
-    return true;
+    if (netInfo.isInternetReachable) {
+      fetch('http://34.69.233.245:9876/sendFeedbackData', {
+        method: 'post',
+        headers: {
+          tokenId: '!@v@zz@',
+          'Content-Type': 'application/json',
+        },
+        signal: (await this.getTimeoutSignal()).signal,
+        body: JSON.stringify(feedbackData),
+      })
+        .then(response => response.json())
+        .then(async resultData => {
+          if (resultData.status === 'Success') {
+            console.log('data send');
+            BackgroundTimer.clearInterval(this.intervalId);
+            this.setState({isbackgroundTimerOn: false});
+            AsyncStorage.removeItem('feedbackData');
+          }
+        })
+        .catch(async e => {
+          //console.log(e);
+        });
+    }
   };
 
   handleAppStateChange = async state => {
-    if (state === 'background') {
-      this.intervalId = BackgroundTimer.setInterval(async () => {
-        if (await this.sendFeedbackData()) {
-          BackgroundTimer.clearInterval(this.intervalId);
+    try {
+      if (state === 'background') {
+        const feedbackData = JSON.parse(
+          await AsyncStorage.getItem('feedbackData'),
+        );
+        if (feedbackData === null) {
+          console.log('null data');
+        } else {
+          this.intervalId = BackgroundTimer.setInterval(async () => {
+            await this.sendFeedbackData(feedbackData);
+          }, 300000);
+          this.setState({isbackgroundTimerOn: true});
         }
-      }, 5000);
-    } else if (state === 'active') {
-      if (this.state.isbackgroundTimerOn === true) {
-        BackgroundTimer.clearInterval(this.intervalId);
-        this.setState({isbackgroundTimerOn: false});
+      } else if (state === 'active') {
+        if (this.state.isbackgroundTimerOn === true) {
+          BackgroundTimer.clearInterval(this.intervalId);
+          this.setState({isbackgroundTimerOn: false});
+        }
       }
+    } catch (error) {
+      console.log('background error', error);
     }
   };
+
   async componentDidMount() {
     AppState.addEventListener('change', this.handleAppStateChange);
-    await this.sendFeedbackData();
     setTimeout(async () => {
       this.setState({
         splashScreenVisible: false,
@@ -65,16 +95,17 @@ export default class connectingScreen extends Component {
   onConnect = async () => {
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
-        /*if (!enabled) {
-        Alert.alert(
+        if (!enabled) {
+          Alert.alert(
             '',
             'Please check your connection with the lavazza caffè macine',
             [{text: 'ok'}],
           );
           this.setState({isConnecting: false});
-        } else {*/
-        this.getProductInfo();
-        //}
+        } else {
+          this.setState({isConnecting: true});
+          this.getProductInfo();
+        }
       })
       .catch(async e => {
         console.log(e);
@@ -90,7 +121,7 @@ export default class connectingScreen extends Component {
     const controller = new AbortController();
     setTimeout(() => {
       controller.abort();
-    }, 5000);
+    }, 10000);
     return controller;
   };
 
@@ -110,6 +141,7 @@ export default class connectingScreen extends Component {
           this.props.navigation.navigate('productList', {
             productList: resultData.data,
             machineName: resultData.machineName,
+            machineId: resultData.machineId,
           });
           setTimeout(() => {
             this.setState({isConnecting: false});
@@ -175,7 +207,6 @@ export default class connectingScreen extends Component {
                     justifyContent: 'center',
                   }}
                   onPress={() => {
-                    this.setState({isConnecting: true});
                     this.onConnect();
                   }}>
                   <Text style={{color: 'white'}}>Connect</Text>

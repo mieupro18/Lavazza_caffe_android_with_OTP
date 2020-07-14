@@ -24,6 +24,8 @@ import {
   TIMEOUT_EXPIRED,
   MACHINE_NOT_READY,
   orderStatus,
+  initialFeedbackInterval,
+  routineFeedbackInterval,
 } from './macros';
 
 class ProductList extends Component {
@@ -43,6 +45,7 @@ class ProductList extends Component {
       waitTime: null,
       timer: 30,
       machineName: null,
+      machineId: null,
       allProductListURL: [
         {
           productName: 'Cappuccino',
@@ -99,7 +102,10 @@ class ProductList extends Component {
     this.setState({
       deviceProductList: deviceProductList,
     });
-    this.setState({machineName: this.props.route.params.machineName});
+    this.setState({
+      machineName: this.props.route.params.machineName,
+      machineId: this.props.route.params.machineId,
+    });
   };
 
   checkForFeedbackVisibility = async productName => {
@@ -112,7 +118,7 @@ class ProductList extends Component {
     if (feedbackTimeDetails === null) {
       feedbackTimeDetails = {
         lastFeedbackDisplayedTime: currentTime,
-        nextFeedbackInterval: 60000,
+        nextFeedbackInterval: initialFeedbackInterval,
       };
       await AsyncStorage.setItem(
         productName,
@@ -126,7 +132,7 @@ class ProductList extends Component {
       feedbackTimeDetails.nextFeedbackInterval
     ) {
       feedbackTimeDetails.lastFeedbackDisplayedTime = currentTime;
-      feedbackTimeDetails.nextFeedbackInterval = 120000;
+      feedbackTimeDetails.nextFeedbackInterval = routineFeedbackInterval;
       await AsyncStorage.setItem(
         productName,
         JSON.stringify(feedbackTimeDetails),
@@ -143,7 +149,7 @@ class ProductList extends Component {
     const controller = new AbortController();
     setTimeout(() => {
       controller.abort();
-    }, 5000);
+    }, 10000);
     return controller;
   };
 
@@ -182,6 +188,7 @@ class ProductList extends Component {
               this.setState({
                 orderStatusCode: PLACE_THE_CUP,
                 waitTimeVisible: false,
+                waitTime: null,
               });
               this.timer = BackgroundTimer.setInterval(async () => {
                 this.setState({timer: this.state.timer - 1});
@@ -364,9 +371,10 @@ class ProductList extends Component {
       feedbackData = {};
     }
     feedbackData[productName] = {
-      rating: rating,
-      timeStamp: Date.parse(new Date()),
+      machineId: this.state.machineId,
       machineName: this.state.machineName,
+      rating: rating,
+      timeStamp: new Date(),
     };
     AsyncStorage.setItem('feedbackData', JSON.stringify(feedbackData));
     console.log(await AsyncStorage.getItem('feedbackData'));
@@ -490,14 +498,14 @@ class ProductList extends Component {
                   {this.state.orderStatusCode === DISPENSING ? (
                     <View style={{marginTop: 10, alignItems: 'center'}}>
                       <Image
-                        style={{width: 150, height: 150, borderRadius: 150 / 2}}
+                        style={{width: 150, height: 150}}
                         source={require('../assets/dispensing.gif')}
                       />
                     </View>
                   ) : (
                     <View style={{marginTop: 10, alignItems: 'center'}}>
                       <Image
-                        style={{width: 75, height: 75, borderRadius: 150 / 2}}
+                        style={{width: 75, height: 75, borderRadius: 75 / 2}}
                         source={
                           this.state.deviceProductList[this.state.selectedIndex]
                             .src
@@ -569,7 +577,7 @@ class ProductList extends Component {
                         <StarRating
                           disabled={false}
                           maxStars={5}
-                          starSize={30}
+                          starSize={35}
                           emptyStarColor="#6F6D6D"
                           fullStarColor="#100A45"
                           halfStarEnabled={false}
@@ -657,8 +665,8 @@ class ProductList extends Component {
                         alignItems: 'center',
                         marginTop: 20,
                       }}>
-                      <Ionicons.Button
-                        name="ios-cafe"
+                      <Fontawesome5.Button
+                        name="mug-hot"
                         size={25}
                         color="white"
                         backgroundColor="#100A45"
@@ -675,7 +683,7 @@ class ProductList extends Component {
                         <Text style={{fontSize: 15, color: '#ffffff'}}>
                           Order
                         </Text>
-                      </Ionicons.Button>
+                      </Fontawesome5.Button>
                     </View>
                   ) : null}
                 </View>
@@ -694,7 +702,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   logoContainer: {
-    //flex:1,
     justifyContent: 'center',
     marginTop: '50%',
     alignItems: 'center',
@@ -702,7 +709,6 @@ const styles = StyleSheet.create({
   header: {
     height: 50,
     justifyContent: 'center',
-    /*alignItems: 'center',*/
     backgroundColor: '#b85400',
   },
   headerText: {
@@ -729,7 +735,6 @@ const styles = StyleSheet.create({
     paddingRight: 35,
     paddingBottom: 35,
     paddingTop: 10,
-    //alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -741,126 +746,10 @@ const styles = StyleSheet.create({
   },
   productName: {
     textShadowColor: '#100A45',
-    //textShadowOffset: {width: -1, height: 1},
-    //textShadowRadius: 10,
-    //fontFamily: 'TimesNewroman',
     fontSize: 15,
     fontWeight: 'bold',
-    //flexWrap: 'wrap',
-
     color: '#100A45',
   },
 });
 
 export default ProductList;
-
-/* (this.state.orderStatus === ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE) || (this.state.orderStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE) ?
-                  <Image
-                  style={{width:'100%',height:}}
-                  source={require('../assets/Cupshot3.jpg')}
-                  /> : null
-                  productId={
-                          this.state.deviceProductList[this.state.selectedIndex]
-                            .productId
-                        }
-
-                  */
-
-/*var value = {"jaskar":"value"}
-    var temp = JSON.stringify(value)
-    AsyncStorage.setItem('name', temp);
-    <Modal animationType="slide" visible={this.state.isConnected}>
-
-        </Modal>
-    <TouchableOpacity
-              style={{marginTop:0,marginBottom:0}}
-              onPress={async () => {
-                this.setState({
-                  selectedIndex: index,
-                });
-                this.setState({modalVisible: !this.state.modalVisible});
-              }}>
-     <View style={{marginTop: 20}}>
-                    {/*{this.state.orderReceived ? <Text style={styles.productName}>Order Received</Text> : null }
-                    this.state.orderStatusCode === ORDER_REQUEST_FAILED ||
-                thi
-                this.state.orderStatusCode === ORDER_CANCELLED_BY_SERVER ||
-                this.state.orderStatusCode === TIMEOUT_EXPIRED ? (
-                  <View
-                    style={{
-                      width: '50%',
-                      justifyContent: 'center',
-                      marginTop: 20,
-                    }}>
-                    <MaterialCommunityIcons.Button
-                      name="reload"
-                      size={30}
-                      color="white"
-                      backgroundColor="#100A45"
-                      onPress={async () => {
-                        await this.disconnectFromMachine();
-                        this.props.navigation.goBack();
-                      }}>
-                      Restart
-                    </MaterialCommunityIcons.Button>
-                  </View>
-                    ) : null
-
-     ORDER ERROR STATUS
-/*const ORDER_REQUEST_FAILED = 'Order request failed\nTry again or restart..!!!';
-const DISPENSE_REQUEST_FAILED =
-  'Dispense request failed\nTimeout expired\nTry again or restart..!!!';
-const TIMEOUT_EXPIRED = 'Timeout expired\nTry again or restart..!!!';
-const ORDER_STATUS_REQUEST_FAILED =
-  'Getting order status failed\nTry again or restart..!!!';
-const ORDER_CANCELLED_BY_SERVER = 'Order cancelled\nTry again..!!!';*/
-/*{(! this.state.isConnected) && (! this.state.splashScreenVisible) ?*/
-
-/*<Image
-                  style={{width:'100%',height:}}
-                  source={require('../assets/Cupshot3.jpg')}
-                  /> : null
-                  productId={
-                          this.state.deviceProductList[this.state.selectedIndex]
-                            .productId
-                        }
-
-                        <Modal animationType='slide' visible={this.state.orderStatus===DISPENSING} onRequestClose={()=>{console.log('do nothing');}}>
-
-            <Image style ={{flex:1,alignSelf:'stretch',width:null,height:null}} source={require('../assets/Cupshot3.jpg')}/>
-
-                    </Modal>
------BEGIN CERTIFICATE-----
-MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/
-MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
-DkRTVCBSb290IENBIFgzMB4XDTE2MDMxNzE2NDA0NloXDTIxMDMxNzE2NDA0Nlow
-SjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUxldCdzIEVuY3J5cHQxIzAhBgNVBAMT
-GkxldCdzIEVuY3J5cHQgQXV0aG9yaXR5IFgzMIIBIjANBgkqhkiG9w0BAQEFAAOC
-AQ8AMIIBCgKCAQEAnNMM8FrlLke3cl03g7NoYzDq1zUmGSXhvb418XCSL7e4S0EF
-q6meNQhY7LEqxGiHC6PjdeTm86dicbp5gWAf15Gan/PQeGdxyGkOlZHP/uaZ6WA8
-SMx+yk13EiSdRxta67nsHjcAHJyse6cF6s5K671B5TaYucv9bTyWaN8jKkKQDIZ0
-Z8h/pZq4UmEUEz9l6YKHy9v6Dlb2honzhT+Xhq+w3Brvaw2VFn3EK6BlspkENnWA
-a6xK8xuQSXgvopZPKiAlKQTGdMDQMc2PMTiVFrqoM7hD8bEfwzB/onkxEz0tNvjj
-/PIzark5McWvxI0NHWQWM6r6hCm21AvA2H3DkwIDAQABo4IBfTCCAXkwEgYDVR0T
-AQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwfwYIKwYBBQUHAQEEczBxMDIG
-CCsGAQUFBzABhiZodHRwOi8vaXNyZy50cnVzdGlkLm9jc3AuaWRlbnRydXN0LmNv
-bTA7BggrBgEFBQcwAoYvaHR0cDovL2FwcHMuaWRlbnRydXN0LmNvbS9yb290cy9k
-c3Ryb290Y2F4My5wN2MwHwYDVR0jBBgwFoAUxKexpHsscfrb4UuQdf/EFWCFiRAw
-VAYDVR0gBE0wSzAIBgZngQwBAgEwPwYLKwYBBAGC3xMBAQEwMDAuBggrBgEFBQcC
-ARYiaHR0cDovL2Nwcy5yb290LXgxLmxldHNlbmNyeXB0Lm9yZzA8BgNVHR8ENTAz
-MDGgL6AthitodHRwOi8vY3JsLmlkZW50cnVzdC5jb20vRFNUUk9PVENBWDNDUkwu
-Y3JsMB0GA1UdDgQWBBSoSmpjBH3duubRObemRWXv86jsoTANBgkqhkiG9w0BAQsF
-AAOCAQEA3TPXEfNjWDjdGBX7CVW+dla5cEilaUcne8IkCJLxWh9KEik3JHRRHGJo
-uM2VcGfl96S8TihRzZvoroed6ti6WqEBmtzw3Wodatg+VyOeph4EYpr/1wXKtx8/
-wApIvJSwtmVi4MFU5aMqrSDE6ea73Mj2tcMyo5jMd6jmeWUHK8so/joWUoHOUgwu
-X4Po1QYz+3dszkDqMp4fklxBwXRsW10KXzPMTZ+sOPAveyxindmjkW8lGy+QsRlG
-PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6
-KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
------END CERTIFICATE-----
-
-                  */
-/*<TouchableHighlight underlayColor='#100A45' style={{ marginTop:20, width:120, height:40, borderRadius:5,backgroundColor:'#100A45',alignItems:'center',justifyContent:'center'}} onPress={() => {this.startDispense();}}>
-                  <Text style = {{color:'white'}}>
-                    Dispense
-                  </Text>
-                    </TouchableHighlight> */
