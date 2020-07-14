@@ -14,7 +14,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
 import TestWifiModule from './TestWifiModule';
 import BackgroundTimer from 'react-native-background-timer';
-import {IPADDRESS, PORT, HTTPS} from '../macros/macros';
+import {IPADDRESS, PORT, HTTPS} from './macros';
 
 export default class connectingScreen extends Component {
   constructor(props) {

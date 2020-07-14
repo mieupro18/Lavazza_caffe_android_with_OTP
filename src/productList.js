@@ -24,7 +24,7 @@ import {
   TIMEOUT_EXPIRED,
   MACHINE_NOT_READY,
   orderStatus,
-} from '../macros/macros';
+} from './macros';
 
 class ProductList extends Component {
   constructor(props) {
