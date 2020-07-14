@@ -14,6 +14,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
 import TestWifiModule from './TestWifiModule';
 import BackgroundTimer from 'react-native-background-timer';
+import {IPADDRESS, PORT, HTTPS} from '../macros/macros';
 
 export default class connectingScreen extends Component {
   constructor(props) {
@@ -64,16 +65,16 @@ export default class connectingScreen extends Component {
   onConnect = async () => {
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
-        if (!enabled) {
-          Alert.alert(
+        /*if (!enabled) {
+        Alert.alert(
             '',
-            'Please check your connection with the lavazza caffe macine',
+            'Please check your connection with the lavazza caffè macine',
             [{text: 'ok'}],
           );
           this.setState({isConnecting: false});
-        } else {
-          this.getProductInfo();
-        }
+        } else {*/
+        this.getProductInfo();
+        //}
       })
       .catch(async e => {
         console.log(e);
@@ -95,21 +96,8 @@ export default class connectingScreen extends Component {
 
   getProductInfo = async () => {
     console.log('get Product Info');
-    /*const temp = [
-      {productId: 106, productName: 'Cappuccino'},
-      {productId: 101, productName: 'South Indian Coffee Light'},
-      {productId: 104, productName: 'Milk'},
-      {productId: 107, productName: 'South Indian Coffee Strong'},
-      {productId: 102, productName: 'Espresso'},
-      {productId: 108, productName: 'Tea Milk'},
-      {productId: 105, productName: 'Tea Water'},
-      {productId: 103, productName: 'Lemon Tea'},
-    ];
-    this.props.navigation.navigate('productList', {
-      productList: temp,
-    });
-    this.setState({isConnecting: false});*/
-    fetch('http://192.168.5.1:9876/productInfo', {
+    console.log(HTTPS, PORT, IPADDRESS);
+    fetch(HTTPS + '://' + IPADDRESS + ':' + PORT + '/productInfo', {
       headers: {
         tokenId: 'secret',
       },
@@ -136,7 +124,7 @@ export default class connectingScreen extends Component {
       .catch(async e => {
         Alert.alert(
           '',
-          'Please check your connection with the lavazza caffe macine',
+          'Please check your connection with the lavazza caffè macine',
           [{text: 'ok'}],
         );
         console.log(e);
@@ -161,10 +149,9 @@ export default class connectingScreen extends Component {
               source={require('../assets/lavazza_logo_with_year.png')}
             />
 
-            <View
-              style={{borderRadius: 125, overflow: 'hidden', marginTop: 10}}>
+            <View style={{borderRadius: 115, overflow: 'hidden'}}>
               <Image
-                style={{width: 250, height: 250}}
+                style={{width: 230, height: 230}}
                 source={require('../assets/connect.gif')}
               />
             </View>
@@ -209,7 +196,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   logoContainer: {
-    height: 150,
+    height: 200,
     justifyContent: 'center',
     marginTop: '50%',
     alignItems: 'center',

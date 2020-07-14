@@ -8,10 +8,10 @@
 
 import React, {Component} from 'react';
 
-import ProductList from './components/productList';
+import ProductList from './src/productList';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import connectingScreen from './components/connectingScreen';
+import connectingScreen from './src/connectingScreen';
 //import registerScreen from './components/registerScreen';
 //import TestWifiModule from './components/TestWifiModule';
 //import StarRating from 'react-native-star-rating';

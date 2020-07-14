@@ -6,38 +6,25 @@ import AsyncStorage from '@react-native-community/async-storage';
 import BackgroundTimer from 'react-native-background-timer';
 import StarRating from 'react-native-star-rating';
 import Icon from 'react-native-vector-icons/Entypo';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Fontawesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-
-// ORDER POSITIVE STATUS CODE
-const BEFORE_PLACING_ORDER = 0;
-const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 1;
-const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 2;
-const PLACE_THE_CUP = 3;
-const DISPENSING = 4;
-const ORDER_DISPENSED = 5;
-
-// ORDER ERROR STATUS CODE
-const SOMETHING_WENT_WRONG = 6;
-const TIMEOUT_EXPIRED = 7;
-const ORDER_CANCELLED = 8;
-const MACHINE_NOT_READY = 9;
-const UNDER_MAINTAINENCE = 10;
-
-const orderStatus = {
-  0: ' Order your Beverage',
-  1: 'Please wait !!!',
-  2: 'Order received\nPlease wait !!!',
-  3: '      Click dispense\nafter placing the cup',
-  4: 'Dispensing!!!',
-  5: 'Beverage dispensed!!!',
-  6: 'Something went wrong\nPlease check the connection',
-  7: 'Timeout Expired',
-  8: 'Order cancelled',
-  9: 'Machine not ready',
-  10: 'Under maintainence',
-};
+import {
+  IPADDRESS,
+  HTTPS,
+  PORT,
+  BEFORE_PLACING_ORDER,
+  ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
+  ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
+  PLACE_THE_CUP,
+  DISPENSING,
+  ORDER_DISPENSED,
+  SOMETHING_WENT_WRONG,
+  TIMEOUT_EXPIRED,
+  MACHINE_NOT_READY,
+  orderStatus,
+} from '../macros/macros';
 
 class ProductList extends Component {
   constructor(props) {
@@ -167,7 +154,13 @@ class ProductList extends Component {
   startPollForOrderStatus = async productName => {
     this.pollingIntervalId = BackgroundTimer.setInterval(async () => {
       fetch(
-        'http://192.168.5.1:9876/orderStatus?orderId=' + this.state.orderId,
+        HTTPS +
+          '://' +
+          IPADDRESS +
+          ':' +
+          PORT +
+          '/orderStatus?orderId=' +
+          this.state.orderId,
         {
           headers: {
             tokenId: 'secret',
@@ -263,12 +256,15 @@ class ProductList extends Component {
       orderStatusCode: ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
     });
     console.log(productId);
-    fetch('http://192.168.5.1:9876/order?productId=' + productId, {
-      headers: {
-        tokenId: 'secret',
+    fetch(
+      HTTPS + '://' + IPADDRESS + ':' + PORT + '/order?productId=' + productId,
+      {
+        headers: {
+          tokenId: 'secret',
+        },
+        signal: (await this.getTimeoutSignal()).signal,
       },
-      signal: (await this.getTimeoutSignal()).signal,
-    })
+    )
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
@@ -309,12 +305,21 @@ class ProductList extends Component {
     BackgroundTimer.clearInterval(this.timer);
     this.setState({timer: 30});
     this.setState({orderStatusCode: DISPENSING});
-    fetch('http://192.168.5.1:9876/dispense?orderId=' + this.state.orderId, {
-      headers: {
-        tokenId: 'secret',
+    fetch(
+      HTTPS +
+        '://' +
+        IPADDRESS +
+        ':' +
+        PORT +
+        '/dispense?orderId=' +
+        this.state.orderId,
+      {
+        headers: {
+          tokenId: 'secret',
+        },
+        signal: (await this.getTimeoutSignal()).signal,
       },
-      signal: (await this.getTimeoutSignal()).signal,
-    })
+    )
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
@@ -482,15 +487,24 @@ class ProductList extends Component {
                       }
                     </Text>
                   </View>
-                  <View style={{marginTop: 10, alignItems: 'center'}}>
-                    <Image
-                      style={{width: 75, height: 75, borderRadius: 150 / 2}}
-                      source={
-                        this.state.deviceProductList[this.state.selectedIndex]
-                          .src
-                      }
-                    />
-                  </View>
+                  {this.state.orderStatusCode === DISPENSING ? (
+                    <View style={{marginTop: 10, alignItems: 'center'}}>
+                      <Image
+                        style={{width: 150, height: 150, borderRadius: 150 / 2}}
+                        source={require('../assets/dispensing.gif')}
+                      />
+                    </View>
+                  ) : (
+                    <View style={{marginTop: 10, alignItems: 'center'}}>
+                      <Image
+                        style={{width: 75, height: 75, borderRadius: 150 / 2}}
+                        source={
+                          this.state.deviceProductList[this.state.selectedIndex]
+                            .src
+                        }
+                      />
+                    </View>
+                  )}
                   {this.state.orderNumberVisible ? (
                     <View
                       style={{
@@ -500,8 +514,8 @@ class ProductList extends Component {
                       }}>
                       <Text
                         style={{
-                          fontSize: 10,
-                          fontWeight:'bold',
+                          fontSize: 12,
+                          fontWeight: 'bold',
                           color: '#100A45',
                         }}>
                         Order No {this.state.orderNumber}
@@ -517,7 +531,7 @@ class ProductList extends Component {
                     }}>
                     <Text style={{color: '#6F6D6D', fontSize: 10}}>Status</Text>
                     <Text
-                      style={{marginTop: 5, color: '#100A45', fontSize: 13}}>
+                      style={{marginTop: 5, color: '#100A45', fontSize: 12}}>
                       {orderStatus[this.state.orderStatusCode]}
                     </Text>
                   </View>
@@ -532,10 +546,10 @@ class ProductList extends Component {
                       <Text
                         style={{
                           fontSize: 10,
-                          fontFamily: '',
+                          fontWeight: 'bold',
                           color: '#100A45',
                         }}>
-                        Approx Wait Time: {this.state.waitTime}min
+                        Approx Wait Time - {this.state.waitTime}min
                       </Text>
                     </View>
                   ) : null}
@@ -555,7 +569,7 @@ class ProductList extends Component {
                         <StarRating
                           disabled={false}
                           maxStars={5}
-                          starSize={35}
+                          starSize={30}
                           emptyStarColor="#6F6D6D"
                           fullStarColor="#100A45"
                           halfStarEnabled={false}
@@ -580,13 +594,15 @@ class ProductList extends Component {
                       }}>
                       <MaterialCommunityIcons.Button
                         name="check-circle"
-                        size={30}
+                        size={25}
                         color="white"
                         backgroundColor="#100A45"
                         onPress={async () => {
                           this.props.navigation.goBack();
                         }}>
-                        Done
+                        <Text style={{fontSize: 15, color: '#ffffff'}}>
+                          Done
+                        </Text>
                       </MaterialCommunityIcons.Button>
                     </View>
                   ) : null}
@@ -601,7 +617,7 @@ class ProductList extends Component {
                         }}>
                         <Fontawesome5.Button
                           name="mug-hot"
-                          size={30}
+                          size={25}
                           color="white"
                           backgroundColor="#100A45"
                           onPress={async () => {
@@ -611,20 +627,22 @@ class ProductList extends Component {
                               ].productName,
                             );
                           }}>
-                          Dispense
+                          <Text style={{fontSize: 15, color: '#ffffff'}}>
+                            Dispense
+                          </Text>
                         </Fontawesome5.Button>
                       </View>
                       <View
                         style={{
-                          marginTop: 20,
+                          marginTop: 10,
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}>
                         <Text
                           style={{
                             fontSize: 10,
-                            fontFamily: '',
-                            color: '#6F6D6D',
+                            fontWeight: 'bold',
+                            color: '#100A45',
                           }}>
                           Timeout: {this.state.timer}
                         </Text>
@@ -639,9 +657,9 @@ class ProductList extends Component {
                         alignItems: 'center',
                         marginTop: 20,
                       }}>
-                      <MaterialCommunityIcons.Button
-                        name="hand-pointing-up"
-                        size={30}
+                      <Ionicons.Button
+                        name="ios-cafe"
+                        size={25}
                         color="white"
                         backgroundColor="#100A45"
                         onPress={async () => {
@@ -654,8 +672,10 @@ class ProductList extends Component {
                             ].productName,
                           );
                         }}>
-                        Order
-                      </MaterialCommunityIcons.Button>
+                        <Text style={{fontSize: 15, color: '#ffffff'}}>
+                          Order
+                        </Text>
+                      </Ionicons.Button>
                     </View>
                   ) : null}
                 </View>
