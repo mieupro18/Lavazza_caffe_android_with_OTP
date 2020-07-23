@@ -20,7 +20,7 @@ export default class connectingScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      splashScreenVisible: true,
+      splashScreenVisible: false,
       isConnecting: false,
       isbackgroundTimerOn: false,
     };
@@ -82,11 +82,11 @@ export default class connectingScreen extends Component {
 
   async componentDidMount() {
     AppState.addEventListener('change', this.handleAppStateChange);
-    setTimeout(async () => {
+    /*setTimeout(async () => {
       this.setState({
         splashScreenVisible: false,
       });
-    }, 3000);
+    }, 3000);*/
   }
 
   async componentWillUnmount() {

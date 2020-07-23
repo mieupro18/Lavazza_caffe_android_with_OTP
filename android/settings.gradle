@@ -1,4 +1,6 @@
 rootProject.name = 'lavazza'
+include ':@react-native-community_clipboard'
+project(':@react-native-community_clipboard').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/clipboard/android')
 include ':@react-native-community_picker'
 project(':@react-native-community_picker').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/picker/android')
 include ':@react-native-community_picker'

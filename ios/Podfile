@@ -100,6 +100,8 @@ target 'lavazza' do
 
   pod 'RNCPicker', :path => '../node_modules/@react-native-community/picker'
 
+  pod 'RNCClipboard', :path => '../node_modules/@react-native-community/clipboard'
+
   target 'lavazzaTests' do
     inherit! :complete
     # Pods for testing
