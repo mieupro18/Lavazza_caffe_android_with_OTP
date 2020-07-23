@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import BackgroundTimer from 'react-native-background-timer';
 import StarRating from 'react-native-star-rating';
 import Icon from 'react-native-vector-icons/Entypo';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import Fontawesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -157,7 +157,7 @@ class ProductList extends Component {
     BackgroundTimer.clearInterval(this.pollingIntervalId);
   };
 
-  startPollForOrderStatus = async productName => {
+  startPollForOrderStatus = async (productName, interval) => {
     this.pollingIntervalId = BackgroundTimer.setInterval(async () => {
       fetch(
         HTTPS +
@@ -255,7 +255,7 @@ class ProductList extends Component {
             waitTime: null,
           });
         });
-    }, 5000);
+    }, interval);
   };
 
   placeOrder = async (productId, productName) => {
@@ -287,7 +287,7 @@ class ProductList extends Component {
           console.log('ack');
           this.state.orderId = resultData.orderId;
           console.log(this.state.orderNumber, this.state.waitTime);
-          await this.startPollForOrderStatus(productName);
+          await this.startPollForOrderStatus(productName, 5000);
         } else {
           if (resultData.infoText === 'Machine is not Ready') {
             this.setState({orderStatusCode: MACHINE_NOT_READY});
@@ -332,7 +332,7 @@ class ProductList extends Component {
         console.log(resultData);
         if (resultData.status === 'Success') {
           console.log('Dispense Starts');
-          this.startPollForOrderStatus(productName);
+          this.startPollForOrderStatus(productName, 3000);
         } else {
           if (resultData.infoText === 'Machine is not Ready ') {
             this.setState({orderStatusCode: MACHINE_NOT_READY, orderId: null});
@@ -398,49 +398,49 @@ class ProductList extends Component {
         <ScrollView>
           {this.state.deviceProductList.map((product, index) => {
             return (
-              <Card key={index}>
-                <CardItem>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                    }}>
-                    <View>
-                      <Image
-                        style={{width: 75, height: 75, borderRadius: 20}}
-                        source={product.src}
-                      />
-                    </View>
+              <TouchableOpacity
+                onPress={() => {
+                  this.setState({
+                    modalVisible: !this.state.modalVisible,
+                    selectedIndex: index,
+                    orderStatusCode: BEFORE_PLACING_ORDER,
+                    starCount: 0,
+                  });
+                }}>
+                <Card key={index}>
+                  <CardItem>
                     <View
                       style={{
-                        justifyContent: 'center',
-                        width: '50%',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        width: '100%',
                       }}>
-                      <Text style={styles.productName}>
-                        {product.productName}
-                      </Text>
-                    </View>
-                    <View style={{justifyContent: 'center'}}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          this.setState({
-                            modalVisible: !this.state.modalVisible,
-                            selectedIndex: index,
-                            orderStatusCode: BEFORE_PLACING_ORDER,
-                            starCount: 0,
-                          });
+                      <View>
+                        <Image
+                          style={{width: 75, height: 75, borderRadius: 20}}
+                          source={product.src}
+                        />
+                      </View>
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          width: '50%',
                         }}>
+                        <Text style={styles.productName}>
+                          {product.productName}
+                        </Text>
+                      </View>
+                      <View style={{justifyContent: 'center'}}>
                         <Icon
                           name="circle-with-plus"
                           size={35}
                           style={{color: '#100A45'}}
                         />
-                      </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                </CardItem>
-              </Card>
+                  </CardItem>
+                </Card>
+              </TouchableOpacity>
             );
           })}
           {this.state.deviceProductList.length > 0 ? (

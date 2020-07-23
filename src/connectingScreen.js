@@ -25,15 +25,14 @@ export default class connectingScreen extends Component {
       isbackgroundTimerOn: false,
     };
   }
-
+  //http://34.71.69.61:9876/sendFeedbackData
   sendFeedbackData = async feedbackData => {
     const netInfo = await NetInfo.fetch();
     console.log('Internet Connection :', netInfo.isInternetReachable);
     if (netInfo.isInternetReachable) {
-      fetch('http://34.69.233.245:9876/sendFeedbackData', {
+      fetch('https://mieupro.pythonanywhere.com/feedback', {
         method: 'post',
         headers: {
-          tokenId: '!@v@zz@',
           'Content-Type': 'application/json',
         },
         signal: (await this.getTimeoutSignal()).signal,
@@ -49,7 +48,7 @@ export default class connectingScreen extends Component {
           }
         })
         .catch(async e => {
-          //console.log(e);
+          console.log(e);
         });
     }
   };
@@ -57,7 +56,8 @@ export default class connectingScreen extends Component {
   handleAppStateChange = async state => {
     try {
       if (state === 'background') {
-        const feedbackData = JSON.parse(
+        console.log('background');
+        /*var feedbackData = JSON.parse(
           await AsyncStorage.getItem('feedbackData'),
         );
         if (feedbackData === null) {
@@ -65,14 +65,15 @@ export default class connectingScreen extends Component {
         } else {
           this.intervalId = BackgroundTimer.setInterval(async () => {
             await this.sendFeedbackData(feedbackData);
-          }, 300000);
+          }, 5000);
           this.setState({isbackgroundTimerOn: true});
-        }
+        }*/
       } else if (state === 'active') {
-        if (this.state.isbackgroundTimerOn === true) {
+        console.log('active');
+        /*if (this.state.isbackgroundTimerOn === true) {
           BackgroundTimer.clearInterval(this.intervalId);
           this.setState({isbackgroundTimerOn: false});
-        }
+        }*/
       }
     } catch (error) {
       console.log('background error', error);
@@ -93,12 +94,14 @@ export default class connectingScreen extends Component {
   }
 
   onConnect = async () => {
+    //this.setState({isConnecting: true});
+    //this.getProductInfo();
     TestWifiModule.isWifiTurnedOn()
       .then(async enabled => {
         if (!enabled) {
           Alert.alert(
             '',
-            'Please check your connection with the lavazza caffè macine',
+            'Please check your connection with the lavazza caffè machine',
             [{text: 'ok'}],
           );
           this.setState({isConnecting: false});
@@ -156,7 +159,7 @@ export default class connectingScreen extends Component {
       .catch(async e => {
         Alert.alert(
           '',
-          'Please check your connection with the lavazza caffè macine',
+          'Please check your connection with the lavazza caffè machine',
           [{text: 'ok'}],
         );
         console.log(e);

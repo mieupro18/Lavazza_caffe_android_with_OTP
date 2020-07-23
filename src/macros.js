@@ -4,8 +4,8 @@ const HTTPS = 'http';
 const PORT = '9876';
 
 // FEEDBACK INTERVAL TIME
-const initialFeedbackInterval = 60000;
-const routineFeedbackInterval = 120000;
+const initialFeedbackInterval = 10800000;
+const routineFeedbackInterval = 86400000;
 
 // ORDER POSITIVE STATUS CODE
 const BEFORE_PLACING_ORDER = 0;
@@ -29,7 +29,7 @@ const orderStatus = {
   5: 'Beverage dispensed\nEnjoy your Beverage !',
   6: '     Something went wrong\nPlease check the connection',
   7: 'Timeout Expired',
-  8: 'Machine not ready',
+  8: 'Machine is not ready',
 };
 
 export {
