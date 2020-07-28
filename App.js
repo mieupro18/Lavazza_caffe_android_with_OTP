@@ -13,12 +13,15 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
 import connectingScreen from './src/connectingScreen';
 import authenticationScreen from './src/authenticationScreen';
+
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="authenticationScreen" headerMode="none">
+      <Stack.Navigator
+        initialRouteName="authenticationScreen"
+        headerMode="none">
         <Stack.Screen
           name="authenticationScreen"
           component={authenticationScreen}

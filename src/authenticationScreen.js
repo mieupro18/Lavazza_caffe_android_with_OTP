@@ -8,9 +8,12 @@ import {
   Alert,
   TextInput,
   Text,
+  Modal,
+  Keyboard,
 } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
+import AsyncStorage from '@react-native-community/async-storage';
 export default class authenticationScreen extends Component {
   constructor(props) {
     super(props);
@@ -18,51 +21,52 @@ export default class authenticationScreen extends Component {
       mobileNumber: null,
       splashScreenVisible: true,
       otpScreenVisible: false,
-      otp: null,
-      enteredOTP: 0,
-      ResendOTPButtonVisible: false,
-      timer: null,
+      otp: [],
+      enteredOTP: null,
     };
   }
 
   async componentDidMount() {
+    //AsyncStorage.setItem('isUserVerified', '');
+    const isUserVerified = await AsyncStorage.getItem('isUserVerified'); //.then(async data =>
+    console.log(isUserVerified);
     setTimeout(async () => {
-      this.setState({
-        splashScreenVisible: false,
-      });
+      if (isUserVerified === 'true') {
+        this.props.navigation.replace('connectingScreen');
+      } else {
+        this.setState({
+          splashScreenVisible: false,
+        });
+      }
     }, 3000);
   }
 
+  getTimeoutSignal = async () => {
+    // eslint-disable-next-line no-undef
+    const controller = new AbortController();
+    setTimeout(() => {
+      controller.abort();
+    }, 10000);
+    return controller;
+  };
+
   sendOtp = async () => {
-    this.state.otp = Math.floor(1000 + Math.random() * 9000);
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    this.state.otp.push(otp.toString());
     console.log(this.state.otp);
     const URL =
       'http://login.bulksmsgateway.in/sendmessage.php?user=FHCL&password=Fhcl$m$@12@&mobile=' +
       this.state.mobileNumber +
-      '&message=OTP for Lavazza Caffe is :' +
-      this.state.otp +
-      '. OTP valid upto : 5 minutes. Please DO NOT SHARE with anyone \n- Lavazza&sender=INVITE&type=3';
+      '&message=OTP for Lavazza Caffè is ' +
+      otp +
+      '. Please DO NOT SHARE with anyone "Enjoy a safe cup of refreshment" - Lavazza&sender=LVZAPP&type=3';
     console.log(URL);
-    fetch(URL)
+    fetch(URL, {signal: (await this.getTimeoutSignal()).signal})
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
         if (resultData.status === 'success') {
           this.setState({otpScreenVisible: true});
-          this.setState({timer: 20});
-          this.intervalId = BackgroundTimer.setInterval(async () => {
-            console.log(this.state.timer);
-            if (this.state.timer === 0) {
-              this.setState({
-                ResendOTPButtonVisible: true,
-                timer: null,
-                enteredOTP: null,
-              });
-              BackgroundTimer.clearInterval(this.intervalId);
-            } else {
-              this.setState({timer: this.state.timer - 1});
-            }
-          }, 1000);
         } else {
           Alert.alert('', 'Please check the Internet connection', [
             {text: 'Ok'},
@@ -77,13 +81,17 @@ export default class authenticationScreen extends Component {
 
   checkOTPValidity = async () => {
     // eslint-disable-next-line eqeqeq
-    if (this.state.enteredOTP == this.state.otp) {
-      BackgroundTimer.clearInterval(this.intervalId);
-      this.props.navigation.navigate('connectingScreen');
+    if (this.state.otp.includes(this.state.enteredOTP)) {
+      AsyncStorage.setItem('isUserVerified', 'true');
+      this.props.navigation.replace('connectingScreen');
+      Alert.alert('', 'Registered Successfully', [
+        {
+          text: 'Ok',
+        },
+      ]);
     } else {
       Alert.alert('', 'Invalid OTP', [{text: 'Ok'}]);
     }
-    console.log('check');
   };
 
   onSubmit = async () => {
@@ -117,93 +125,139 @@ export default class authenticationScreen extends Component {
                   source={require('../assets/lavazza_logo_without_year.png')}
                 />
               </View>
-              {this.state.otpScreenVisible ? (
-                <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                  <OTPInputView
-                    style={{width: '80%', color: '#100A45', height: 100}}
-                    pinCount={4}
-                    //code={this.state.enteredOTP} //You can supply this prop or not. The component will be used as a controlled / uncontrolled component respectively.
-                    // onCodeChanged = {code => { this.setState({code})}}
-                    // autoFocusOnLoad
-                    //codeInputFieldStyle={styles.underlineStyleBase}
-                    //codeInputHighlightStyle={styles.underlineStyleHighLighted}
-                    placeholderTextColor='#100A45'
-                    clearInputs={true}
-                    onCodeFilled={code => {
-                      console.log('code', code);
-                      this.state.enteredOTP = code;
-                      this.checkOTPValidity();
-                    }}
-                    //console.log(`Code is ${code}, you are good to go!`);
-                    //}}
-                  />
-                  {this.state.ResendOTPButtonVisible ? (
-                    <TouchableHighlight
-                      underlayColor="#100A45"
-                      style={{
-                        width: 100,
-                        height: 40,
-                        borderRadius: 5,
-                        backgroundColor: '#100A45',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onPress={() => {
-                        this.setState({ResendOTPButtonVisible: false});
-                        this.sendOtp();
-                      }}>
-                      <Text style={{color: 'white'}}>Resend OTP</Text>
-                    </TouchableHighlight>
-                  ) : (
-                    <Text style={{color: '#100A45'}}>
-                      Resend OTP After : {this.state.timer}sec
-                    </Text>
-                  )}
-                </View>
-              ) : (
-                <View>
-                  <View style={{marginTop: 30, alignItems: 'center'}}>
-                    <TextInput
-                      style={{
-                        height: 40,
-                        width: '80%',
-                        color: '#100A45',
-                        borderColor: 'gray',
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        backgroundColor: '#EBEBEB',
-                      }}
-                      keyboardType="number-pad"
-                      placeholder=" Mobile Number"
-                      fontSize={15}
-                      onChangeText={number =>
-                        (this.state.mobileNumber = number)
-                      }
-                    />
-                  </View>
-
-                  <View style={{alignItems: 'center', marginTop: 30}}>
-                    <TouchableHighlight
-                      underlayColor="#100A45"
-                      style={{
-                        width: 100,
-                        height: 40,
-                        borderRadius: 5,
-                        backgroundColor: '#100A45',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onPress={() => {
-                        this.onSubmit();
-                      }}>
-                      <Text style={{color: 'white'}}>Submit</Text>
-                    </TouchableHighlight>
-                  </View>
-                </View>
-              )}
+              <View style={{marginTop: 20, alignItems: 'center'}}>
+                <Text
+                  style={{
+                    color: '#100A45',
+                    fontSize: 15,
+                    fontWeight: 'bold',
+                  }}>
+                  USER REGISTRATION
+                </Text>
+                <TextInput
+                  style={{
+                    height: 40,
+                    width: '80%',
+                    color: '#100A45',
+                    borderColor: 'gray',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    backgroundColor: '#EBEBEB',
+                    marginTop: 10,
+                  }}
+                  keyboardType="number-pad"
+                  placeholder=" Mobile Number"
+                  fontSize={15}
+                  onChangeText={number => (this.state.mobileNumber = number)}
+                />
+              </View>
+              <View style={{alignItems: 'center', marginTop: 20}}>
+                <TouchableHighlight
+                  underlayColor="#100A45"
+                  style={{
+                    width: 100,
+                    height: 40,
+                    borderRadius: 5,
+                    backgroundColor: '#100A45',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    this.onSubmit();
+                  }}>
+                  <Text style={{color: 'white'}}>Submit</Text>
+                </TouchableHighlight>
+              </View>
             </View>
           </View>
         )}
+        <Modal
+          animationType="slide"
+          visible={this.state.otpScreenVisible}
+          onRequestClose={async () => {
+            BackgroundTimer.clearInterval(this.intervalId);
+            this.setState({
+              otpScreenVisible: false,
+              enteredOTP: null,
+            });
+            this.state.otp = [];
+            console.log(this.state.otp);
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                <View style={{marginTop: 10, alignItems: 'center'}}>
+                  <Image
+                    style={{width: 100, height: 25}}
+                    source={require('../assets/lavazza_logo_without_year.png')}
+                  />
+                </View>
+                <Text
+                  style={{
+                    color: '#100A45',
+                    fontSize: 15,
+                    fontWeight: 'bold',
+                    marginTop: 20,
+                  }}>
+                  OTP VERIFICATION
+                </Text>
+
+                <OTPInputView
+                  style={{
+                    width: '80%',
+                    color: '#100A45',
+                    height: 100,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  pinCount={4}
+                  autoFocusOnLoad={false}
+                  codeInputFieldStyle={styles.underlineStyleBase}
+                  codeInputHighlightStyle={styles.underlineStyleHighLighted}
+                  placeholderTextColor="#100A45"
+                  onCodeFilled={code => {
+                    console.log('code', code);
+                    this.state.enteredOTP = code;
+                    Keyboard.dismiss();
+                    this.checkOTPValidity();
+                  }}
+                />
+                <Text
+                  style={{
+                    color: '#100A45',
+                    fontSize: 12,
+                    marginTop: 10,
+                  }}>
+                  OTP has been sent to
+                </Text>
+                <Text
+                  style={{
+                    color: '#100A45',
+                    fontSize: 12,
+                  }}>
+                  +91 {this.state.mobileNumber}
+                </Text>
+                <TouchableHighlight
+                  underlayColor="#100A45"
+                  style={{
+                    width: 100,
+                    height: 40,
+                    borderRadius: 5,
+                    backgroundColor: '#100A45',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 20,
+                  }}
+                  onPress={() => {
+                    this.sendOtp();
+                  }}>
+                  <Text style={{color: 'white'}}>Resend OTP</Text>
+                </TouchableHighlight>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -224,7 +278,6 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'center',
-    marginTop: 50,
   },
   modalView: {
     margin: '12%',
@@ -246,13 +299,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   underlineStyleBase: {
-    width: 30,
+    /*width: 30,
     height: 45,
     borderWidth: 0,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1,*/
+    color: '#100A45',
+    borderColor: '#100A45',
   },
 
   underlineStyleHighLighted: {
-    borderColor: '#03DAC6',
+    borderColor: '#100A45',
+    color: '#100A45',
   },
 });

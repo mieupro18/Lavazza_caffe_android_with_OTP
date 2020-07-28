@@ -20,7 +20,6 @@ export default class connectingScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      splashScreenVisible: false,
       isConnecting: false,
       isbackgroundTimerOn: false,
     };
@@ -57,7 +56,7 @@ export default class connectingScreen extends Component {
     try {
       if (state === 'background') {
         console.log('background');
-        /*var feedbackData = JSON.parse(
+        var feedbackData = JSON.parse(
           await AsyncStorage.getItem('feedbackData'),
         );
         if (feedbackData === null) {
@@ -65,15 +64,15 @@ export default class connectingScreen extends Component {
         } else {
           this.intervalId = BackgroundTimer.setInterval(async () => {
             await this.sendFeedbackData(feedbackData);
-          }, 5000);
+          }, 300000);
           this.setState({isbackgroundTimerOn: true});
-        }*/
+        }
       } else if (state === 'active') {
         console.log('active');
-        /*if (this.state.isbackgroundTimerOn === true) {
+        if (this.state.isbackgroundTimerOn === true) {
           BackgroundTimer.clearInterval(this.intervalId);
           this.setState({isbackgroundTimerOn: false});
-        }*/
+        }
       }
     } catch (error) {
       console.log('background error', error);
@@ -82,11 +81,6 @@ export default class connectingScreen extends Component {
 
   async componentDidMount() {
     AppState.addEventListener('change', this.handleAppStateChange);
-    /*setTimeout(async () => {
-      this.setState({
-        splashScreenVisible: false,
-      });
-    }, 3000);*/
   }
 
   async componentWillUnmount() {
@@ -170,54 +164,45 @@ export default class connectingScreen extends Component {
   render() {
     return (
       <View style={{flex: 1, backgroundColor: '#ffffff'}}>
-        {this.state.splashScreenVisible ? (
-          <View style={styles.logoContainer}>
-            <Image
-              style={styles.logo}
-              source={require('../assets/lavazza_logo_with_year.png')}
-            />
-          </View>
-        ) : (
-          <View style={styles.centeredView}>
-            <Image
-              style={{height: 100, resizeMode: 'contain'}}
-              source={require('../assets/lavazza_logo_with_year.png')}
-            />
+        <View style={styles.centeredView}>
+          <Image
+            style={{height: 100, resizeMode: 'contain'}}
+            source={require('../assets/lavazza_logo_with_year.png')}
+          />
 
-            <View style={{borderRadius: 115, overflow: 'hidden'}}>
-              <Image
-                style={{width: 230, height: 230}}
-                source={require('../assets/connect.gif')}
-              />
-            </View>
-            {this.state.isConnecting ? (
-              <View style={{flexDirection: 'row', marginTop: 20}}>
-                <ActivityIndicator size="small" color="#100A45" />
-                <Text style={{color: '#100A45', fontWeight: 'bold'}}>
-                  Connecting...!
-                </Text>
-              </View>
-            ) : (
-              <View style={{alignItems: 'center', marginTop: 20}}>
-                <TouchableHighlight
-                  underlayColor="#100A45"
-                  style={{
-                    width: 100,
-                    height: 40,
-                    borderRadius: 5,
-                    backgroundColor: '#100A45',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  onPress={() => {
-                    this.onConnect();
-                  }}>
-                  <Text style={{color: 'white'}}>Connect</Text>
-                </TouchableHighlight>
-              </View>
-            )}
+          <View style={{borderRadius: 115, overflow: 'hidden'}}>
+            <Image
+              style={{width: 230, height: 230}}
+              source={require('../assets/connect.gif')}
+            />
           </View>
-        )}
+          {this.state.isConnecting ? (
+            <View style={{flexDirection: 'row', marginTop: 20}}>
+              <ActivityIndicator size="small" color="#100A45" />
+              <Text style={{color: '#100A45', fontWeight: 'bold'}}>
+                Connecting...!
+              </Text>
+            </View>
+          ) : (
+            <View style={{alignItems: 'center', marginTop: 20}}>
+              <TouchableHighlight
+                underlayColor="#100A45"
+                style={{
+                  width: 100,
+                  height: 40,
+                  borderRadius: 5,
+                  backgroundColor: '#100A45',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => {
+                  this.onConnect();
+                }}>
+                <Text style={{color: 'white'}}>Connect</Text>
+              </TouchableHighlight>
+            </View>
+          )}
+        </View>
       </View>
     );
   }

@@ -7,6 +7,10 @@ const PORT = '9876';
 const initialFeedbackInterval = 10800000;
 const routineFeedbackInterval = 86400000;
 
+// FEEDBACK INTERVAL TIME
+//const initialFeedbackInterval = 60000;
+//const routineFeedbackInterval = 60000;
+
 // ORDER POSITIVE STATUS CODE
 const BEFORE_PLACING_ORDER = 0;
 const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 1;
