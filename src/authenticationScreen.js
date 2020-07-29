@@ -14,6 +14,7 @@ import {
 import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import AsyncStorage from '@react-native-community/async-storage';
+
 export default class authenticationScreen extends Component {
   constructor(props) {
     super(props);
@@ -129,14 +130,14 @@ export default class authenticationScreen extends Component {
                 <Text
                   style={{
                     color: '#100A45',
-                    fontSize: 15,
+                    fontSize: 12,
                     fontWeight: 'bold',
                   }}>
-                  USER REGISTRATION
+                  Registration
                 </Text>
                 <TextInput
                   style={{
-                    height: 40,
+                    height: 50,
                     width: '80%',
                     color: '#100A45',
                     borderColor: 'gray',
@@ -147,7 +148,7 @@ export default class authenticationScreen extends Component {
                   }}
                   keyboardType="number-pad"
                   placeholder=" Mobile Number"
-                  fontSize={15}
+                  fontSize={12}
                   onChangeText={number => (this.state.mobileNumber = number)}
                 />
               </View>
@@ -196,16 +197,16 @@ export default class authenticationScreen extends Component {
                 <Text
                   style={{
                     color: '#100A45',
-                    fontSize: 15,
+                    fontSize: 12,
                     fontWeight: 'bold',
                     marginTop: 20,
                   }}>
-                  OTP VERIFICATION
+                  OTP Verification
                 </Text>
 
                 <OTPInputView
                   style={{
-                    width: '80%',
+                    width: '100%',
                     color: '#100A45',
                     height: 100,
                     alignItems: 'center',
@@ -225,23 +226,23 @@ export default class authenticationScreen extends Component {
                 />
                 <Text
                   style={{
-                    color: '#100A45',
-                    fontSize: 12,
+                    color: '#6F6D6D',
+                    fontSize: 10,
                     marginTop: 10,
                   }}>
                   OTP has been sent to
                 </Text>
                 <Text
                   style={{
-                    color: '#100A45',
-                    fontSize: 12,
+                    color: '#6F6D6D',
+                    fontSize: 10,
                   }}>
                   +91 {this.state.mobileNumber}
                 </Text>
                 <TouchableHighlight
                   underlayColor="#100A45"
                   style={{
-                    width: 100,
+                    width: '80%',
                     height: 40,
                     borderRadius: 5,
                     backgroundColor: '#100A45',
