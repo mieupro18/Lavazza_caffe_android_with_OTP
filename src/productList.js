@@ -15,7 +15,7 @@ import {
   HTTPS,
   PORT,
   BEFORE_PLACING_ORDER,
-  ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
+  PLEASE_WAIT,
   ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
   PLACE_THE_CUP,
   DISPENSING,
@@ -23,6 +23,9 @@ import {
   SOMETHING_WENT_WRONG,
   TIMEOUT_EXPIRED,
   MACHINE_NOT_READY,
+  FOAMER_OFF,
+  RINSING,
+  MILK_NOT_READY,
   orderStatus,
   initialFeedbackInterval,
   routineFeedbackInterval,
@@ -260,7 +263,7 @@ class ProductList extends Component {
 
   placeOrder = async (productId, productName) => {
     this.setState({
-      orderStatusCode: ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
+      orderStatusCode: PLEASE_WAIT,
     });
     console.log(productId);
     fetch(
@@ -281,7 +284,7 @@ class ProductList extends Component {
             orderNumberVisible: true,
             waitTimeVisible: true,
             orderNumber: resultData.orderNo,
-            waitTime: resultData.approxWaitTime,
+            waitTime: resultData.approxWaitTime * 30,
           });
           console.log(resultData);
           console.log('ack');
@@ -332,20 +335,27 @@ class ProductList extends Component {
         console.log(resultData);
         if (resultData.status === 'Success') {
           console.log('Dispense Starts');
+          //this.setState({orderStatusCode: DISPENSING});
           this.startPollForOrderStatus(productName, 3000);
         } else {
-          if (resultData.infoText === 'Machine is not Ready ') {
-            this.setState({orderStatusCode: MACHINE_NOT_READY, orderId: null});
+          if (resultData.infoText === 'Machine is not Ready') {
+            this.setState({orderStatusCode: MACHINE_NOT_READY});
+          } else if (resultData.infoText === 'Foamer off') {
+            this.setState({orderStatusCode: FOAMER_OFF});
+          } else if (resultData.infoText === 'Rinsing') {
+            this.setState({orderStatusCode: RINSING});
+          } else if (resultData.infoText === 'Milk not Ready') {
+            this.setState({orderStatusCode: MILK_NOT_READY});
           } else {
-            this.setState({
-              orderStatusCode: SOMETHING_WENT_WRONG,
-              orderId: null,
-              orderNumberVisible: false,
-              waitTimeVisible: false,
-              orderNumber: null,
-              waitTime: null,
-            });
+            this.setState({orderStatusCode: SOMETHING_WENT_WRONG});
           }
+          this.setState({
+            orderId: null,
+            orderNumberVisible: false,
+            waitTimeVisible: false,
+            orderNumber: null,
+            waitTime: null,
+          });
         }
       })
       .catch(async e => {
@@ -449,8 +459,7 @@ class ProductList extends Component {
               visible={this.state.modalVisible}
               onRequestClose={async () => {
                 if (
-                  this.state.orderStatusCode >=
-                    ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE &&
+                  this.state.orderStatusCode >= PLEASE_WAIT &&
                   this.state.orderStatusCode <= DISPENSING
                 ) {
                   console.log('Please dont go back');
@@ -557,7 +566,7 @@ class ProductList extends Component {
                           fontWeight: 'bold',
                           color: '#100A45',
                         }}>
-                        Approx Wait Time - {this.state.waitTime}min
+                        Approx Wait Time - {this.state.waitTime} Sec
                       </Text>
                     </View>
                   ) : null}

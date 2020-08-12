@@ -13,7 +13,7 @@ const routineFeedbackInterval = 86400000;
 
 // ORDER POSITIVE STATUS CODE
 const BEFORE_PLACING_ORDER = 0;
-const ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE = 1;
+const PLEASE_WAIT = 1;
 const ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE = 2;
 const PLACE_THE_CUP = 3;
 const DISPENSING = 4;
@@ -23,25 +23,30 @@ const ORDER_DISPENSED = 5;
 const SOMETHING_WENT_WRONG = 6;
 const TIMEOUT_EXPIRED = 7;
 const MACHINE_NOT_READY = 8;
+const FOAMER_OFF = 9;
+const RINSING = 10;
+const MILK_NOT_READY = 11;
 
 const orderStatus = {
   0: 'Order your Beverage',
   1: 'Please wait !',
   2: 'Order received\n  Please wait !',
-  3: 'Place the cup and\n   Click dispense',
+  3: 'Please place the cup and\n         Press Dispense',
   4: 'Dispensing !',
   5: 'Beverage dispensed\nEnjoy your Beverage !',
   6: '     Something went wrong\nPlease check the connection',
   7: 'Timeout Expired',
-  8: 'Machine is not ready',
+  8: '     Machine is not ready\nPlease try after sometime',
+  9: 'Please turn on the Foamer',
+  10: 'Rinsing',
+  11: '         Milk is not ready\nPlease try after sometime',
 };
-
 export {
   IPADDRESS,
   HTTPS,
   PORT,
   BEFORE_PLACING_ORDER,
-  ORDER_PLACED_AND_NOT_YET_RECEIVED_BY_THE_MACHINE,
+  PLEASE_WAIT,
   ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
   DISPENSING,
   PLACE_THE_CUP,
@@ -49,6 +54,9 @@ export {
   SOMETHING_WENT_WRONG,
   TIMEOUT_EXPIRED,
   MACHINE_NOT_READY,
+  FOAMER_OFF,
+  RINSING,
+  MILK_NOT_READY,
   orderStatus,
   initialFeedbackInterval,
   routineFeedbackInterval,
