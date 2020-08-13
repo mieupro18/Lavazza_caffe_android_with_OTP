@@ -90,7 +90,9 @@ class ProductList extends Component {
     this.showProductList(this.props.route.params.productList);
   }
 
-  async componentWillUnmount() {}
+  async componentWillUnmount() {
+	 AppState.removeEventListener('change');
+  }
 
   showProductList = async produtList => {
     console.log('show Product list');

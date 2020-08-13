@@ -5,7 +5,7 @@
  * @format
  * @flow strict-local
  */
-
+import 'react-native-gesture-handler';
 import React, {Component} from 'react';
 
 import ProductList from './src/productList';
