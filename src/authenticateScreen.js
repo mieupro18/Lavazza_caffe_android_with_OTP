@@ -14,8 +14,16 @@ import {
 import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import AsyncStorage from '@react-native-community/async-storage';
+import {SPLASHSCREEN_VISIBLE_TIME} from './macros';
+import getTimeoutSignal from './commonApis';
+import {
+  responsiveScreenHeight,
+  responsiveScreenWidth,
+  responsiveScreenFontSize,
+} from 'react-native-responsive-dimensions';
+import {color} from 'react-native-reanimated';
 
-export default class authenticationScreen extends Component {
+export default class authenticateScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -28,18 +36,18 @@ export default class authenticationScreen extends Component {
   }
 
   async componentDidMount() {
-    //AsyncStorage.setItem('isUserVerified', '');
+    AsyncStorage.setItem('isUserVerified', '');
     const isUserVerified = await AsyncStorage.getItem('isUserVerified'); //.then(async data =>
     console.log(isUserVerified);
     setTimeout(async () => {
       if (isUserVerified === 'true') {
-        this.props.navigation.replace('connectingScreen');
+        this.props.navigation.replace('connectScreen');
       } else {
         this.setState({
           splashScreenVisible: false,
         });
       }
-    }, 3000);
+    }, SPLASHSCREEN_VISIBLE_TIME);
   }
 
   getTimeoutSignal = async () => {
@@ -53,8 +61,6 @@ export default class authenticationScreen extends Component {
 
   sendOtp = async () => {
     const otp = Math.floor(1000 + Math.random() * 9000);
-    this.state.otp.push(otp.toString());
-    console.log(this.state.otp);
     const URL =
       'http://login.bulksmsgateway.in/sendmessage.php?user=FHCL&password=Fhcl$m$@12@&mobile=' +
       this.state.mobileNumber +
@@ -62,11 +68,16 @@ export default class authenticationScreen extends Component {
       otp +
       '. Please DO NOT SHARE with anyone "Enjoy a safe cup of refreshment" - Lavazza&sender=LVZAPP&type=3';
     console.log(URL);
-    fetch(URL, {signal: (await this.getTimeoutSignal()).signal})
+    /*this.state.otp.push(otp.toString());
+    console.log(this.state.otp);
+    this.setState({otpScreenVisible: true});*/
+    fetch(URL, {signal: (await getTimeoutSignal(5000)).signal})
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
         if (resultData.status === 'success') {
+          this.state.otp.push(otp.toString());
+          console.log(this.state.otp);
           this.setState({otpScreenVisible: true});
         } else {
           Alert.alert('', 'Please check the Internet connection', [
@@ -81,10 +92,9 @@ export default class authenticationScreen extends Component {
   };
 
   checkOTPValidity = async () => {
-    // eslint-disable-next-line eqeqeq
     if (this.state.otp.includes(this.state.enteredOTP)) {
       AsyncStorage.setItem('isUserVerified', 'true');
-      this.props.navigation.replace('connectingScreen');
+      this.props.navigation.replace('connectScreen');
       Alert.alert('', 'Registered Successfully', [
         {
           text: 'Ok',
@@ -109,65 +119,42 @@ export default class authenticationScreen extends Component {
 
   render() {
     return (
-      <View style={{flex: 1, backgroundColor: '#ffffff'}}>
+      <View style={styles.mainContainer}>
         {this.state.splashScreenVisible ? (
-          <View style={styles.logoContainer}>
+          <View style={styles.splashScreenLogoContainer}>
             <Image
-              style={styles.logo}
+              style={styles.splashScreenLogo}
               source={require('../assets/lavazza_logo_with_year.png')}
             />
           </View>
         ) : (
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-              <View style={{marginTop: 10, alignItems: 'center'}}>
+              <View style={styles.registrationScreenContainer}>
                 <Image
-                  style={{width: 100, height: 25}}
+                  style={styles.logoStyleInModal}
                   source={require('../assets/lavazza_logo_without_year.png')}
                 />
               </View>
-              <View style={{marginTop: 20, alignItems: 'center'}}>
-                <Text
-                  style={{
-                    color: '#100A45',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                  }}>
-                  Registration
-                </Text>
+              <View style={styles.registrationScreenContainer}>
+                <Text style={styles.registrationTextStyle}>Registration</Text>
                 <TextInput
-                  style={{
-                    height: 50,
-                    width: '80%',
-                    color: '#100A45',
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    backgroundColor: '#EBEBEB',
-                    marginTop: 10,
-                  }}
+                  style={styles.mobileNumberInput}
                   keyboardType="number-pad"
                   placeholder=" Mobile Number"
-                  fontSize={12}
+                  fontSize={responsiveScreenFontSize(1.5)}
                   onChangeText={number => (this.state.mobileNumber = number)}
                 />
               </View>
-              <View style={{alignItems: 'center', marginTop: 20}}>
+              <View style={styles.registrationScreenContainer}>
                 <TouchableHighlight
                   underlayColor="#100A45"
-                  style={{
-                    width: 100,
-                    height: 40,
-                    borderRadius: 5,
-                    backgroundColor: '#100A45',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  style={styles.submitButtonStyle}
                   onPress={() => {
                     Keyboard.dismiss();
                     this.onSubmit();
                   }}>
-                  <Text style={{color: 'white'}}>Submit</Text>
+                  <Text style={styles.buttonTextStyle}>Submit</Text>
                 </TouchableHighlight>
               </View>
             </View>
@@ -187,35 +174,24 @@ export default class authenticationScreen extends Component {
           }}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-              <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                <View style={{marginTop: 10, alignItems: 'center'}}>
-                  <Image
-                    style={{width: 100, height: 25}}
-                    source={require('../assets/lavazza_logo_without_year.png')}
-                  />
-                </View>
-                <Text
-                  style={{
-                    color: '#100A45',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                    marginTop: 20,
-                  }}>
-                  OTP Verification
-                </Text>
-
+              <View style={styles.otpScreenContainer}>
+                <Image
+                  style={styles.logoStyleInModal}
+                  source={require('../assets/lavazza_logo_without_year.png')}
+                />
+              </View>
+              <View style={styles.otpScreenContainer}>
+                <Text style={styles.OTPTextStyle}>OTP Verification</Text>
+              </View>
+              <View style={styles.otpScreenContainer}>
                 <OTPInputView
-                  style={{
-                    width: '100%',
-                    color: '#100A45',
-                    height: 100,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  style={styles.otpInputView}
                   pinCount={4}
                   autoFocusOnLoad={false}
-                  codeInputFieldStyle={styles.underlineStyleBase}
-                  codeInputHighlightStyle={styles.underlineStyleHighLighted}
+                  codeInputFieldStyle={styles.otpBoxUnderlineStyleBase}
+                  codeInputHighlightStyle={
+                    styles.otpBoxUnderlineStyleHighLighted
+                  }
                   placeholderTextColor="#100A45"
                   onCodeFilled={code => {
                     console.log('code', code);
@@ -224,36 +200,23 @@ export default class authenticationScreen extends Component {
                     this.checkOTPValidity();
                   }}
                 />
-                <Text
-                  style={{
-                    color: '#6F6D6D',
-                    fontSize: 10,
-                    marginTop: 10,
-                  }}>
+              </View>
+              <View style={styles.otpScreenContainer}>
+                <Text style={styles.otpSentToNumberTextStyle}>
                   OTP has been sent to
                 </Text>
-                <Text
-                  style={{
-                    color: '#6F6D6D',
-                    fontSize: 10,
-                  }}>
+                <Text style={styles.otpSentToNumberTextStyle}>
                   +91 {this.state.mobileNumber}
                 </Text>
+              </View>
+              <View style={styles.otpScreenContainer}>
                 <TouchableHighlight
                   underlayColor="#100A45"
-                  style={{
-                    width: '80%',
-                    height: 40,
-                    borderRadius: 5,
-                    backgroundColor: '#100A45',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 20,
-                  }}
+                  style={styles.resendOtpButtonStyle}
                   onPress={() => {
                     this.sendOtp();
                   }}>
-                  <Text style={{color: 'white'}}>Resend OTP</Text>
+                  <Text style={styles.buttonTextStyle}>Resend OTP</Text>
                 </TouchableHighlight>
               </View>
             </View>
@@ -265,51 +228,108 @@ export default class authenticationScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  logo: {
-    width: '50%',
-    height: '75%',
-    resizeMode: 'contain',
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
-  logoContainer: {
-    height: 200,
+  splashScreenLogoContainer: {
+    flex: 1,
+    height: responsiveScreenHeight(20),
     justifyContent: 'center',
-    marginTop: '50%',
     alignItems: 'center',
+  },
+  splashScreenLogo: {
+    width: responsiveScreenWidth(50),
+    height: '100%',
+    resizeMode: 'contain',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
   },
   modalView: {
-    margin: '12%',
+    margin: '10%',
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: responsiveScreenWidth(5),
     borderColor: '#100A45',
-    borderWidth: 1.5,
-    paddingLeft: 35,
-    paddingRight: 35,
-    paddingBottom: 35,
-    paddingTop: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderWidth: responsiveScreenWidth(0.5),
+    paddingLeft: responsiveScreenWidth(5),
+    paddingRight: responsiveScreenWidth(5),
+    paddingBottom: responsiveScreenWidth(5),
+    paddingTop: responsiveScreenWidth(2),
   },
-  underlineStyleBase: {
-    /*width: 30,
-    height: 45,
-    borderWidth: 0,
-    borderBottomWidth: 1,*/
+  registrationScreenContainer: {
+    marginTop: '5%',
+    alignItems: 'center',
+  },
+  logoStyleInModal: {
+    width: responsiveScreenWidth(25),
+    height: responsiveScreenHeight(4),
+    resizeMode: 'contain',
+  },
+  registrationTextStyle: {
+    color: '#100A45',
+    fontSize: responsiveScreenFontSize(1.5),
+    fontWeight: 'bold',
+  },
+  mobileNumberInput: {
+    height: responsiveScreenHeight(5),
+    width: responsiveScreenWidth(45),
+    color: '#100A45',
+    borderColor: 'gray',
+    borderWidth: responsiveScreenWidth(0.1),
+    borderRadius: responsiveScreenWidth(2),
+    backgroundColor: '#EBEBEB',
+    marginTop: '5%',
+  },
+  submitButtonStyle: {
+    width: responsiveScreenWidth(25),
+    height: responsiveScreenHeight(5),
+    borderRadius: responsiveScreenHeight(1),
+    backgroundColor: '#100A45',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonTextStyle: {
+    color: 'white',
+    fontSize: responsiveScreenFontSize(1.5),
+  },
+  otpScreenContainer: {
+    marginTop: '3%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  OTPTextStyle: {
+    color: '#100A45',
+    fontSize: responsiveScreenFontSize(1.5),
+    fontWeight: 'bold',
+    marginTop: '5%',
+  },
+  otpInputView: {
+    width: '75%',
+    color: '#100A45',
+    height: responsiveScreenHeight(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpBoxUnderlineStyleBase: {
     color: '#100A45',
     borderColor: '#100A45',
   },
-
-  underlineStyleHighLighted: {
+  otpBoxUnderlineStyleHighLighted: {
     borderColor: '#100A45',
     color: '#100A45',
+  },
+  otpSentToNumberTextStyle: {
+    fontSize: responsiveScreenFontSize(1.3),
+    color: '#6F6D6D',
+  },
+  resendOtpButtonStyle: {
+    width: responsiveScreenWidth(35),
+    height: responsiveScreenHeight(5),
+    borderRadius: responsiveScreenHeight(1),
+    backgroundColor: '#100A45',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
