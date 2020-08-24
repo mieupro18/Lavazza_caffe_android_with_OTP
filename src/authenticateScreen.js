@@ -10,6 +10,7 @@ import {
   Text,
   Modal,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
@@ -21,7 +22,6 @@ import {
   responsiveScreenWidth,
   responsiveScreenFontSize,
 } from 'react-native-responsive-dimensions';
-import {color} from 'react-native-reanimated';
 
 export default class authenticateScreen extends Component {
   constructor(props) {
@@ -29,6 +29,7 @@ export default class authenticateScreen extends Component {
     this.state = {
       mobileNumber: null,
       splashScreenVisible: true,
+      isLoading: false,
       otpScreenVisible: false,
       otp: [],
       enteredOTP: null,
@@ -36,7 +37,7 @@ export default class authenticateScreen extends Component {
   }
 
   async componentDidMount() {
-    AsyncStorage.setItem('isUserVerified', '');
+    //AsyncStorage.setItem('isUserVerified', '');
     const isUserVerified = await AsyncStorage.getItem('isUserVerified'); //.then(async data =>
     console.log(isUserVerified);
     setTimeout(async () => {
@@ -62,7 +63,7 @@ export default class authenticateScreen extends Component {
   sendOtp = async () => {
     const otp = Math.floor(1000 + Math.random() * 9000);
     const URL =
-      'http://login.bulksmsgateway.in/sendmessage.php?user=FHCL&password=Fhcl$m$@12@&mobile=' +
+      'https://login.bulksmsgateway.in/sendmessage.php?user=FHCL&password=Fhcl$m$@12@&mobile=' +
       this.state.mobileNumber +
       '&message=OTP for Lavazza Caffè is ' +
       otp +
@@ -70,6 +71,7 @@ export default class authenticateScreen extends Component {
     console.log(URL);
     /*this.state.otp.push(otp.toString());
     console.log(this.state.otp);
+    setTimeout(()=>{this.setState({isLoading: false});},2000)
     this.setState({otpScreenVisible: true});*/
     fetch(URL, {signal: (await getTimeoutSignal(5000)).signal})
       .then(response => response.json())
@@ -84,9 +86,11 @@ export default class authenticateScreen extends Component {
             {text: 'Ok'},
           ]);
         }
+        this.setState({isLoading: false});
       })
       .catch(async e => {
         console.log(e);
+        this.setState({isLoading: false});
         Alert.alert('', 'Please check the Internet connection', [{text: 'Ok'}]);
       });
   };
@@ -108,8 +112,10 @@ export default class authenticateScreen extends Component {
   onSubmit = async () => {
     if (this.state.mobileNumber !== null && this.state.mobileNumber !== '') {
       if (this.state.mobileNumber.match(/^\d{10}$/)) {
-        this.sendOtp();
+        this.setState({isLoading: true});
+        await this.sendOtp();
       } else {
+        this.setState({isLoading: false});
         Alert.alert('', 'Invalid Mobile Number Format', [{text: 'Ok'}]);
       }
     } else {
@@ -146,17 +152,28 @@ export default class authenticateScreen extends Component {
                   onChangeText={number => (this.state.mobileNumber = number)}
                 />
               </View>
-              <View style={styles.registrationScreenContainer}>
-                <TouchableHighlight
-                  underlayColor="#100A45"
-                  style={styles.submitButtonStyle}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    this.onSubmit();
-                  }}>
-                  <Text style={styles.buttonTextStyle}>Submit</Text>
-                </TouchableHighlight>
-              </View>
+              {this.state.isLoading ? (
+                <View style={styles.registrationScreenContainer}>
+                  <View style={styles.loadingActivityContainer}>
+                    <ActivityIndicator size="small" color="#100A45" />
+                    <Text style={styles.loadingActivityTextStyle}>
+                      Loading...!
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.registrationScreenContainer}>
+                  <TouchableHighlight
+                    underlayColor="#100A45"
+                    style={styles.submitButtonStyle}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      this.onSubmit();
+                    }}>
+                    <Text style={styles.buttonTextStyle}>Submit</Text>
+                  </TouchableHighlight>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -289,6 +306,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#100A45',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingActivityContainer: {
+    flexDirection: 'row',
+    marginTop: '5%',
+  },
+  loadingActivityTextStyle: {
+    color: '#100A45',
+    fontSize: responsiveScreenFontSize(1.5),
   },
   buttonTextStyle: {
     color: 'white',
