@@ -51,15 +51,6 @@ export default class authenticateScreen extends Component {
     }, SPLASHSCREEN_VISIBLE_TIME);
   }
 
-  getTimeoutSignal = async () => {
-    // eslint-disable-next-line no-undef
-    const controller = new AbortController();
-    setTimeout(() => {
-      controller.abort();
-    }, 10000);
-    return controller;
-  };
-
   sendOtp = async () => {
     const otp = Math.floor(1000 + Math.random() * 9000);
     const URL =
