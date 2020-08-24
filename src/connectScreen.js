@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   AppState,
   Text,
+  BackHandler,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -43,7 +44,9 @@ export default class connectScreen extends Component {
   }
 
   async componentWillUnmount() {
+    //console.log("back button pressed")
     AppState.removeEventListener('change');
+    //BackHandler.exitApp();
   }
 
   // Sending collected Feedback data to remote server

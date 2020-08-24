@@ -15,7 +15,7 @@ import {
 import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import AsyncStorage from '@react-native-community/async-storage';
-import {SPLASHSCREEN_VISIBLE_TIME} from './macros';
+
 import getTimeoutSignal from './commonApis';
 import {
   responsiveScreenHeight,
@@ -28,7 +28,6 @@ export default class authenticateScreen extends Component {
     super(props);
     this.state = {
       mobileNumber: null,
-      splashScreenVisible: true,
       isLoading: false,
       otpScreenVisible: false,
       otp: [],
@@ -36,20 +35,9 @@ export default class authenticateScreen extends Component {
     };
   }
 
-  async componentDidMount() {
-    //AsyncStorage.setItem('isUserVerified', '');
-    const isUserVerified = await AsyncStorage.getItem('isUserVerified'); //.then(async data =>
-    console.log(isUserVerified);
-    setTimeout(async () => {
-      if (isUserVerified === 'true') {
-        this.props.navigation.replace('connectScreen');
-      } else {
-        this.setState({
-          splashScreenVisible: false,
-        });
-      }
-    }, SPLASHSCREEN_VISIBLE_TIME);
-  }
+  async componentDidMount() {}
+
+  async componentWillUnmount() {}
 
   sendOtp = async () => {
     const otp = Math.floor(1000 + Math.random() * 9000);
@@ -117,57 +105,48 @@ export default class authenticateScreen extends Component {
   render() {
     return (
       <View style={styles.mainContainer}>
-        {this.state.splashScreenVisible ? (
-          <View style={styles.splashScreenLogoContainer}>
-            <Image
-              style={styles.splashScreenLogo}
-              source={require('../assets/lavazza_logo_with_year.png')}
-            />
-          </View>
-        ) : (
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <View style={styles.registrationScreenContainer}>
-                <Image
-                  style={styles.logoStyleInModal}
-                  source={require('../assets/lavazza_logo_without_year.png')}
-                />
-              </View>
-              <View style={styles.registrationScreenContainer}>
-                <Text style={styles.registrationTextStyle}>Registration</Text>
-                <TextInput
-                  style={styles.mobileNumberInput}
-                  keyboardType="number-pad"
-                  placeholder=" Mobile Number"
-                  fontSize={responsiveScreenFontSize(1.5)}
-                  onChangeText={number => (this.state.mobileNumber = number)}
-                />
-              </View>
-              {this.state.isLoading ? (
-                <View style={styles.registrationScreenContainer}>
-                  <View style={styles.loadingActivityContainer}>
-                    <ActivityIndicator size="small" color="#100A45" />
-                    <Text style={styles.loadingActivityTextStyle}>
-                      Loading...!
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.registrationScreenContainer}>
-                  <TouchableHighlight
-                    underlayColor="#100A45"
-                    style={styles.submitButtonStyle}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      this.onSubmit();
-                    }}>
-                    <Text style={styles.buttonTextStyle}>Submit</Text>
-                  </TouchableHighlight>
-                </View>
-              )}
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <View style={styles.registrationScreenContainer}>
+              <Image
+                style={styles.logoStyleInModal}
+                source={require('../assets/lavazza_logo_without_year.png')}
+              />
             </View>
+            <View style={styles.registrationScreenContainer}>
+              <Text style={styles.registrationTextStyle}>Registration</Text>
+              <TextInput
+                style={styles.mobileNumberInput}
+                keyboardType="number-pad"
+                placeholder=" Mobile Number"
+                fontSize={responsiveScreenFontSize(1.5)}
+                onChangeText={number => (this.state.mobileNumber = number)}
+              />
+            </View>
+            {this.state.isLoading ? (
+              <View style={styles.registrationScreenContainer}>
+                <View style={styles.loadingActivityContainer}>
+                  <ActivityIndicator size="small" color="#100A45" />
+                  <Text style={styles.loadingActivityTextStyle}>
+                    Loading...!
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.registrationScreenContainer}>
+                <TouchableHighlight
+                  underlayColor="#100A45"
+                  style={styles.submitButtonStyle}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    this.onSubmit();
+                  }}>
+                  <Text style={styles.buttonTextStyle}>Submit</Text>
+                </TouchableHighlight>
+              </View>
+            )}
           </View>
-        )}
+        </View>
         <Modal
           animationType="slide"
           visible={this.state.otpScreenVisible}
