@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
 import {
   StyleSheet,
@@ -12,16 +11,17 @@ import {
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
-import BackgroundTimer from 'react-native-background-timer';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import AsyncStorage from '@react-native-community/async-storage';
-
-import getTimeoutSignal from './commonApis';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   responsiveScreenHeight,
   responsiveScreenWidth,
   responsiveScreenFontSize,
 } from 'react-native-responsive-dimensions';
+import getTimeoutSignal from './commonApis';
+
+MaterialCommunityIcons.loadFont();
 
 export default class authenticateScreen extends Component {
   constructor(props) {
@@ -151,7 +151,6 @@ export default class authenticateScreen extends Component {
           animationType="slide"
           visible={this.state.otpScreenVisible}
           onRequestClose={async () => {
-            BackgroundTimer.clearInterval(this.intervalId);
             this.setState({
               otpScreenVisible: false,
               enteredOTP: null,
@@ -161,6 +160,19 @@ export default class authenticateScreen extends Component {
           }}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
+              <MaterialCommunityIcons
+                name="close-circle"
+                style={styles.modalExitIconStyle}
+                onPress={() => {
+                  this.setState({
+                    otpScreenVisible: false,
+                    enteredOTP: null,
+                  });
+                  this.state.otp = [];
+                  console.log(this.state.otp);
+                }}
+                size={responsiveScreenHeight(3.5)}
+              />
               <View style={styles.otpScreenContainer}>
                 <Image
                   style={styles.logoStyleInModal}
@@ -217,7 +229,7 @@ export default class authenticateScreen extends Component {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
   },
   splashScreenLogoContainer: {
     flex: 1,
@@ -244,6 +256,10 @@ const styles = StyleSheet.create({
     paddingRight: responsiveScreenWidth(5),
     paddingBottom: responsiveScreenWidth(5),
     paddingTop: responsiveScreenWidth(2),
+  },
+  modalExitIconStyle: {
+    color: '#100A45',
+    left: '95%',
   },
   registrationScreenContainer: {
     marginTop: '5%',
