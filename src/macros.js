@@ -4,6 +4,9 @@ const HTTPS = 'http';
 const PORT = '9876';
 const FEEDBACK_SERVER_ENDPOINT = 'https://mieupro.pythonanywhere.com/feedback';
 
+// OS types
+const ANDROID = 'android';
+const IOS = 'ios';
 // FEEDBACK INTERVAL TIME in ms
 //const INITIAL_FEEDBACK_INTERVAL = 10800000;
 //const ROUTINE_FEEDBACK_INTERVAL = 86400000;
@@ -156,4 +159,6 @@ export {
   orderStatus,
   productList,
   timeoutForDispense,
+  ANDROID,
+  IOS,
 };
