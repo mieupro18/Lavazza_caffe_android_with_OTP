@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   AppState,
   Text,
-  BackHandler,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -39,14 +38,11 @@ export default class connectScreen extends Component {
   }
 
   async componentDidMount() {
-    //console.log(responsiveScreenHeight(15))
     AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   async componentWillUnmount() {
-    //console.log("back button pressed")
     AppState.removeEventListener('change');
-    //BackHandler.exitApp();
   }
 
   // Sending collected Feedback data to remote server
@@ -196,6 +192,17 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  splashScreenLogoContainer: {
+    flex: 1,
+    height: responsiveScreenHeight(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashScreenLogo: {
+    width: responsiveScreenWidth(50),
+    height: '100%',
+    resizeMode: 'contain',
   },
   centeredViewContainer: {
     flex: 1,
