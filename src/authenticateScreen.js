@@ -30,6 +30,8 @@ export default class AuthenticateScreen extends Component {
       mobileNumber: null,
       isLoading: false,
       otpScreenVisible: false,
+      otpTimeout: null,
+      otpTimeoutVisible: false,
       otp: [],
       enteredOTP: null,
     };
@@ -50,22 +52,47 @@ export default class AuthenticateScreen extends Component {
     console.log(URL);
     /*this.state.otp.push(otp.toString());
     console.log(this.state.otp);
-    setTimeout(()=>{this.setState({isLoading: false});},2000)
-    this.setState({otpScreenVisible: true});*/
-    fetch(URL, {signal: (await getTimeoutSignal(5000)).signal})
+    this.setState({
+      otpScreenVisible: true,
+      otpTimeoutVisible: true,
+      otpTimeout: 120,
+      isLoading: false,
+    });
+    this.intervalId = setInterval(async () => {
+      this.setState({otpTimeout: this.state.otpTimeout - 1});
+      console.log(this.state.otpTimeout);
+      if (this.state.otpTimeout === 0) {
+        clearInterval(this.intervalId);
+        this.setState({otpTimeoutVisible: false, otpTimeout: null});
+      }
+    }, 1000);*/
+    fetch(URL, {signal: (await getTimeoutSignal(20000)).signal})
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
         if (resultData.status === 'success') {
           this.state.otp.push(otp.toString());
           console.log(this.state.otp);
-          this.setState({otpScreenVisible: true});
+          this.setState({
+            isLoading: false,
+            otpScreenVisible: true,
+            otpTimeoutVisible: true,
+            otpTimeout: 120,
+          });
+          this.intervalId = setInterval(async () => {
+            this.setState({otpTimeout: this.state.otpTimeout - 1});
+            console.log(this.state.otpTimeout);
+            if (this.state.otpTimeout === 0) {
+              clearInterval(this.intervalId);
+              this.setState({otpTimeoutVisible: false, otpTimeout: null});
+            }
+          }, 1000);
         } else {
           Alert.alert('', 'Please check the Internet connection', [
             {text: 'Ok'},
           ]);
+          this.setState({isLoading: false});
         }
-        this.setState({isLoading: false});
       })
       .catch(async e => {
         console.log(e);
@@ -76,13 +103,15 @@ export default class AuthenticateScreen extends Component {
 
   checkOTPValidity = async () => {
     if (this.state.otp.includes(this.state.enteredOTP)) {
-      AsyncStorage.setItem('isUserVerified', 'true');
-      this.props.navigation.replace('connectScreen');
+      clearInterval(this.intervalId);
+      this.setState({otpTimeoutVisible: false, otpTimeout: null});
       Alert.alert('', 'Registered Successfully', [
         {
           text: 'Ok',
         },
       ]);
+      AsyncStorage.setItem('isUserVerified', 'true');
+      this.props.navigation.replace('connectScreen');
     } else {
       Alert.alert('', 'Invalid OTP', [{text: 'Ok'}]);
     }
@@ -102,6 +131,19 @@ export default class AuthenticateScreen extends Component {
     }
   };
 
+  onClosingOtpScreen = async () => {
+    clearInterval(this.intervalId);
+    this.setState({
+      otpScreenVisible: false,
+      enteredOTP: null,
+      otpTimeoutVisible: false,
+      otpTimeout: null,
+    });
+
+    this.state.otp = [];
+    console.log(this.state.otp);
+  };
+
   render() {
     return (
       <View style={styles.mainContainer}>
@@ -114,11 +156,15 @@ export default class AuthenticateScreen extends Component {
               />
             </View>
             <View style={styles.registrationScreenContainer}>
-              <Text style={styles.registrationTextStyle}>Registration</Text>
+              <Text style={styles.registrationTextStyle}>
+                User Registration
+              </Text>
               <TextInput
                 style={styles.mobileNumberInput}
                 keyboardType="number-pad"
-                placeholder=" Mobile Number"
+                selectionColor="#100A45"
+                maxLength={10}
+                placeholder="Enter phone number"
                 fontSize={responsiveScreenFontSize(1.5)}
                 onChangeText={number => (this.state.mobileNumber = number)}
               />
@@ -151,12 +197,7 @@ export default class AuthenticateScreen extends Component {
           animationType="slide"
           visible={this.state.otpScreenVisible}
           onRequestClose={async () => {
-            this.setState({
-              otpScreenVisible: false,
-              enteredOTP: null,
-            });
-            this.state.otp = [];
-            console.log(this.state.otp);
+            this.onClosingOtpScreen();
           }}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -164,12 +205,7 @@ export default class AuthenticateScreen extends Component {
                 name="close-circle"
                 style={styles.modalExitIconStyle}
                 onPress={() => {
-                  this.setState({
-                    otpScreenVisible: false,
-                    enteredOTP: null,
-                  });
-                  this.state.otp = [];
-                  console.log(this.state.otp);
+                  this.onClosingOtpScreen();
                 }}
                 size={responsiveScreenHeight(3.5)}
               />
@@ -208,16 +244,24 @@ export default class AuthenticateScreen extends Component {
                   +91 {this.state.mobileNumber}
                 </Text>
               </View>
-              <View style={styles.otpScreenContainer}>
-                <TouchableHighlight
-                  underlayColor="#100A45"
-                  style={styles.resendOtpButtonStyle}
-                  onPress={() => {
-                    this.sendOtp();
-                  }}>
-                  <Text style={styles.buttonTextStyle}>Resend OTP</Text>
-                </TouchableHighlight>
-              </View>
+              {this.state.otpTimeoutVisible ? (
+                <View style={styles.otpScreenContainer}>
+                  <Text style={styles.timeoutTextStyle}>
+                    OTP Timeout : {this.state.otpTimeout}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.otpScreenContainer}>
+                  <TouchableHighlight
+                    underlayColor="#100A45"
+                    style={styles.resendOtpButtonStyle}
+                    onPress={() => {
+                      this.sendOtp();
+                    }}>
+                    <Text style={styles.buttonTextStyle}>Resend OTP</Text>
+                  </TouchableHighlight>
+                </View>
+              )}
             </View>
           </View>
         </Modal>
@@ -262,7 +306,7 @@ const styles = StyleSheet.create({
     left: '95%',
   },
   registrationScreenContainer: {
-    marginTop: '5%',
+    marginTop: '7%',
     alignItems: 'center',
   },
   logoStyleInModal: {
@@ -277,7 +321,8 @@ const styles = StyleSheet.create({
   },
   mobileNumberInput: {
     height: responsiveScreenHeight(5),
-    width: responsiveScreenWidth(45),
+    width: responsiveScreenWidth(50),
+    textAlign: 'center',
     color: '#100A45',
     borderColor: 'gray',
     borderWidth: responsiveScreenWidth(0.1),
@@ -305,8 +350,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: responsiveScreenFontSize(1.5),
   },
+  timeoutTextStyle: {
+    color: '#100A45',
+    fontWeight: 'bold',
+    fontSize: responsiveScreenFontSize(1.2),
+  },
   otpScreenContainer: {
-    marginTop: '3%',
+    marginTop: '2%',
     alignItems: 'center',
     justifyContent: 'center',
   },
