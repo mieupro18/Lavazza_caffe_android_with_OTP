@@ -23,7 +23,7 @@ import getTimeoutSignal from './commonApis';
 
 MaterialCommunityIcons.loadFont();
 
-export default class authenticateScreen extends Component {
+export default class AuthenticateScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {

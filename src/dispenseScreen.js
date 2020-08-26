@@ -7,7 +7,6 @@ import {
   View,
   Text,
   Modal,
-  AppState,
   TouchableOpacity,
 } from 'react-native';
 import {Card, CardItem} from 'native-base';
@@ -45,11 +44,12 @@ import {
   productList,
 } from './macros';
 import getTimeoutSignal from './commonApis';
+import ProgressiveImage from './progressiveImage';
 
 MaterialCommunityIcons.loadFont();
 MaterialIcons.loadFont();
 
-class dispenseScreen extends Component {
+export default class DispenseScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -431,7 +431,7 @@ class dispenseScreen extends Component {
                 </View>
                 {this.state.orderStatusCode === DISPENSING ? (
                   <View style={styles.modalItemContainer}>
-                    <Image
+                    <ProgressiveImage
                       style={styles.dispensingGifStyleInModal}
                       source={require('../assets/dispensing.gif')}
                     />
@@ -675,5 +675,3 @@ const styles = StyleSheet.create({
     color: '#100A45',
   },
 });
-
-export default dispenseScreen;

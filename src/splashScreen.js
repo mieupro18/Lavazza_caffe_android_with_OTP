@@ -7,7 +7,7 @@ import {
   responsiveScreenWidth,
 } from 'react-native-responsive-dimensions';
 
-export default class splashScreen extends Component {
+export default class SplashScreen extends Component {
   constructor(props) {
     super(props);
   }
