@@ -83,8 +83,8 @@ export default class DispenseScreen extends Component {
       let filterProduct = productList.find(
         allproduct => allproduct.productName === product.productName,
       );
-      filterProduct.productId = product.productId;
-      deviceProductList.push(filterProduct);
+      product.src = filterProduct.src;
+      deviceProductList.push(product);
     });
     this.setState({
       deviceProductList: deviceProductList,
