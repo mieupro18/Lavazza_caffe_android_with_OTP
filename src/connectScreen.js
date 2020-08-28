@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   AppState,
   Text,
+  BackHandler,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -32,7 +33,6 @@ export default class ConnectScreen extends Component {
     super(props);
     this.state = {
       isLoading: false,
-      isBackgroundTimerOn: false,
     };
   }
 
@@ -63,7 +63,6 @@ export default class ConnectScreen extends Component {
           if (resultData.status === 'Success') {
             console.log('data send');
             BackgroundTimer.stopBackgroundTimer(this.intervalId);
-            this.setState({isBackgroundTimerOn: false});
             AsyncStorage.removeItem('feedbackData');
           }
         })
@@ -90,14 +89,10 @@ export default class ConnectScreen extends Component {
             console.log(feedbackData);
             await this.sendFeedbackData(feedbackData);
           }, INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA);
-          this.setState({isBackgroundTimerOn: true});
         }
       } else if (state === 'active') {
         console.log('active');
-        if (this.state.isbackgroundTimerOn === true) {
-          BackgroundTimer.stopBackgroundTimer(this.intervalId);
-          this.setState({isBackgroundTimerOn: false});
-        }
+        BackgroundTimer.stopBackgroundTimer(this.intervalId);
       }
     } catch (error) {
       console.log('Background error', error);
