@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   AppState,
   Text,
-  BackHandler,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -41,6 +40,7 @@ export default class ConnectScreen extends Component {
   }
 
   async componentWillUnmount() {
+    BackgroundTimer.stopBackgroundTimer(this.intervalId);
     AppState.removeEventListener('change', this.handleAppStateChange);
   }
 
