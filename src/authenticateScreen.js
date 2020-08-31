@@ -344,7 +344,8 @@ const styles = StyleSheet.create({
   },
   loadingActivityTextStyle: {
     color: '#100A45',
-    fontSize: responsiveScreenFontSize(1.5),
+    fontWeight: 'bold',
+    fontSize: responsiveScreenFontSize(1.8),
   },
   buttonTextStyle: {
     color: 'white',
