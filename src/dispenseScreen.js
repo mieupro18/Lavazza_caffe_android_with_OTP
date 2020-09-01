@@ -8,6 +8,7 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import {Card, CardItem} from 'native-base';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -27,7 +28,7 @@ import {
   BEFORE_PLACING_ORDER,
   PLEASE_WAIT,
   ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
-  PLACE_THE_CUP,
+  WAITING_TO_DISPENSE,
   DISPENSING,
   ORDER_DISPENSED,
   SOMETHING_WENT_WRONG,
@@ -36,6 +37,7 @@ import {
   FOAMER_OFF,
   RINSING,
   MILK_NOT_READY,
+  MACHINE_DETAIL_MISMATCH,
   orderStatus,
   INITIAL_FEEDBACK_INTERVAL,
   ROUTINE_FEEDBACK_INTERVAL,
@@ -43,6 +45,7 @@ import {
   timeoutForDispense,
   productList,
   TOKEN,
+  SUCCESS,
 } from './macros';
 import getTimeoutSignal from './commonApis';
 import ProgressiveImage from './progressiveImage';
@@ -65,6 +68,10 @@ export default class DispenseScreen extends Component {
       orderId: null,
       orderNumber: null,
       waitTime: null,
+      pairOrderFlag: false,
+      pairProductId: null,
+      pairProductName: null,
+      pairProductImage: null,
       timer: timeoutForDispense,
       machineName: null,
       machineId: null,
@@ -139,7 +146,20 @@ export default class DispenseScreen extends Component {
       waitTimeVisible: false,
       orderNumber: null,
       waitTime: null,
+      pairOrderFlag: false,
+      pairProductId: null,
+      pairProductName: null,
+      pairProductImage: null,
     });
+  };
+
+  showMachineNameMismatch = async () => {
+    Alert.alert('', 'Product changed. Please reconnect', [
+      {
+        text: 'Ok',
+      },
+    ]);
+    this.props.navigation.goBack();
   };
 
   stopPollForOrderStatus = async () => {
@@ -159,25 +179,28 @@ export default class DispenseScreen extends Component {
         {
           headers: {
             tokenId: TOKEN,
+            machineId: this.state.machineId,
+            machineName: this.state.machineName,
           },
-          signal: (await getTimeoutSignal(10000)).signal,
+          signal: getTimeoutSignal().signal,
         },
       )
         .then(response => response.json())
         .then(async resultData => {
           console.log(resultData);
-          if (resultData.status === 'Success') {
+          if (resultData.status === SUCCESS) {
             if (
-              resultData.orderStatus === 'InQueue' ||
-              resultData.orderStatus === 'Dispensing'
+              resultData.orderStatus ===
+                ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE ||
+              resultData.orderStatus === DISPENSING
             ) {
               console.log('Continue poll');
-            } else if (resultData.orderStatus === 'WaitingToDispense') {
+            } else if (resultData.orderStatus === WAITING_TO_DISPENSE) {
               this.stopPollForOrderStatus();
               console.log('WaitingToDispense');
               console.log('Stopped poll for user to place the cup');
               this.setState({
-                orderStatusCode: PLACE_THE_CUP,
+                orderStatusCode: WAITING_TO_DISPENSE,
                 waitTimeVisible: false,
                 waitTime: null,
               });
@@ -193,7 +216,7 @@ export default class DispenseScreen extends Component {
                   this.setStateVariablesToInitialState();
                 }
               }, 1000);
-            } else if (resultData.orderStatus === 'Dispensed') {
+            } else if (resultData.orderStatus === ORDER_DISPENSED) {
               console.log('Dispensed');
               this.stopPollForOrderStatus();
               if (await this.checkForFeedbackVisibility(productName)) {
@@ -206,7 +229,7 @@ export default class DispenseScreen extends Component {
                 orderStatusCode: ORDER_DISPENSED,
                 orderId: null,
               });
-            } else if (resultData.orderStatus === 'Machine is not Ready') {
+            } else if (resultData.orderStatus === MACHINE_NOT_READY) {
               console.log('not ready');
               this.stopPollForOrderStatus();
               this.setState({
@@ -216,12 +239,15 @@ export default class DispenseScreen extends Component {
             }
           } else {
             this.stopPollForOrderStatus();
-            this.setState({
-              orderStatusCode: SOMETHING_WENT_WRONG,
-            });
+            if (resultData.orderStatus === MACHINE_DETAIL_MISMATCH) {
+              this.showMachineNameMismatch();
+            } else {
+              this.setState({
+                orderStatusCode: SOMETHING_WENT_WRONG,
+              });
+            }
             this.setStateVariablesToInitialState();
           }
-          //console.log(this.state.orderStatusCode);
         })
         .catch(async e => {
           this.stopPollForOrderStatus();
@@ -233,24 +259,77 @@ export default class DispenseScreen extends Component {
     }, HTTP_POLLING_INTERVAL);
   };
 
+  checkForPairOrder = async (
+    productId,
+    productName,
+    pairOrderFlag,
+    pairProductId,
+  ) => {
+    if (pairOrderFlag) {
+      let pairProduct = this.state.deviceProductList.find(
+        allproduct => allproduct.productId === pairProductId,
+      );
+      console.log(pairProduct);
+      Alert.alert(
+        '',
+        'Do you want ' + productName + ' with ' + pairProduct.productName + '?',
+        [
+          {
+            text: 'Yes',
+            onPress: () => {
+              this.setState({
+                pairOrderFlag: pairOrderFlag,
+                pairProductId: pairProductId,
+                pairProductName: pairProduct.productName,
+                pairProductImage: pairProduct.src,
+              });
+              this.placeOrder(productId, productName);
+            },
+          },
+          {
+            text: 'No',
+            onPress: () => {
+              this.placeOrder(productId, productName);
+            },
+          },
+        ],
+      );
+    } else {
+      this.placeOrder(productId, productName);
+    }
+  };
+
   placeOrder = async (productId, productName) => {
     this.setState({
       orderStatusCode: PLEASE_WAIT,
     });
     console.log(productId);
     fetch(
-      HTTPS + '://' + IPADDRESS + ':' + PORT + '/order?productId=' + productId,
+      HTTPS +
+        '://' +
+        IPADDRESS +
+        ':' +
+        PORT +
+        '/order?productId=' +
+        productId +
+        '&pairOrderFlag=' +
+        this.state.pairOrderFlag,
       {
         headers: {
           tokenId: TOKEN,
+          machineId: this.state.machineId,
+          machineName: this.state.machineName,
         },
-        signal: (await getTimeoutSignal(10000)).signal,
+        signal: getTimeoutSignal().signal,
       },
     )
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
-        if (resultData.status === 'Success') {
+        if (
+          resultData.status === SUCCESS &&
+          resultData.orderStatus === ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE
+        ) {
           this.setState({
             orderStatusCode: ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
             orderNumberVisible: true,
@@ -261,11 +340,19 @@ export default class DispenseScreen extends Component {
           this.state.orderId = resultData.orderId;
           await this.startPollForOrderStatus(productName);
         } else {
-          if (resultData.infoText === 'Machine is not Ready') {
+          if (resultData.orderStatus === MACHINE_NOT_READY) {
             this.setState({orderStatusCode: MACHINE_NOT_READY});
+          } else if (resultData.orderStatus === MACHINE_DETAIL_MISMATCH) {
+            this.showMachineNameMismatch();
           } else {
             this.setState({orderStatusCode: SOMETHING_WENT_WRONG});
           }
+          this.setState({
+            pairOrderFlag: false,
+            pairProductId: null,
+            pairProductName: null,
+            pairProductImage: null,
+          });
         }
       })
       .catch(async e => {
@@ -292,25 +379,32 @@ export default class DispenseScreen extends Component {
       {
         headers: {
           tokenId: TOKEN,
+          machineId: this.state.machineId,
+          machineName: this.state.machineName,
         },
-        signal: (await getTimeoutSignal(10000)).signal,
+        signal: getTimeoutSignal().signal,
       },
     )
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
-        if (resultData.status === 'Success') {
+        if (
+          resultData.status === SUCCESS &&
+          resultData.orderStatus === DISPENSING
+        ) {
           console.log('Dispense Starts');
           this.startPollForOrderStatus(productName);
         } else {
-          if (resultData.infoText === 'Machine is not Ready') {
+          if (resultData.orderStatus === MACHINE_NOT_READY) {
             this.setState({orderStatusCode: MACHINE_NOT_READY});
-          } else if (resultData.infoText === 'Foamer off') {
+          } else if (resultData.orderStatus === FOAMER_OFF) {
             this.setState({orderStatusCode: FOAMER_OFF});
-          } else if (resultData.infoText === 'Rinsing') {
+          } else if (resultData.orderStatus === RINSING) {
             this.setState({orderStatusCode: RINSING});
-          } else if (resultData.infoText === 'Milk not Ready') {
+          } else if (resultData.orderStatus === MILK_NOT_READY) {
             this.setState({orderStatusCode: MILK_NOT_READY});
+          } else if (resultData.orderStatus === MACHINE_DETAIL_MISMATCH) {
+            this.showMachineNameMismatch();
           } else {
             this.setState({orderStatusCode: SOMETHING_WENT_WRONG});
           }
@@ -325,7 +419,7 @@ export default class DispenseScreen extends Component {
       });
   };
 
-  async onStarRatingPress(rating, productName) {
+  async onStarRatingPress(rating, productNames) {
     console.log(rating);
     this.setState({
       starCount: rating,
@@ -335,12 +429,14 @@ export default class DispenseScreen extends Component {
       console.log('null');
       feedbackData = {};
     }
-    feedbackData[productName] = {
-      machineId: this.state.machineId,
-      machineName: this.state.machineName,
-      rating: rating,
-      timeStamp: new Date(),
-    };
+    for (var index in productNames) {
+      feedbackData[productNames[index]] = {
+        machineId: this.state.machineId,
+        machineName: this.state.machineName,
+        rating: rating,
+        timeStamp: new Date(),
+      };
+    }
     AsyncStorage.setItem('feedbackData', JSON.stringify(feedbackData));
     console.log(await AsyncStorage.getItem('feedbackData'));
   }
@@ -429,6 +525,12 @@ export default class DispenseScreen extends Component {
                         .productName
                     }
                   </Text>
+                  {this.state.pairOrderFlag ? (
+                    <Text style={styles.productNameTextStyle}>
+                      {'&'}
+                      {this.state.pairProductName}
+                    </Text>
+                  ) : null}
                 </View>
                 {this.state.orderStatusCode === DISPENSING ? (
                   <View style={styles.modalItemContainer}>
@@ -438,14 +540,35 @@ export default class DispenseScreen extends Component {
                     />
                   </View>
                 ) : (
-                  <View style={styles.modalItemContainer}>
-                    <Image
-                      style={styles.productImageStyleInModal}
-                      source={
-                        this.state.deviceProductList[this.state.selectedIndex]
-                          .src
-                      }
-                    />
+                  <View>
+                    {this.state.pairOrderFlag ? (
+                      <View style={styles.pairProductImageContainer}>
+                        <Image
+                          style={styles.productImageStyleInModal}
+                          source={
+                            this.state.deviceProductList[
+                              this.state.selectedIndex
+                            ].src
+                          }
+                        />
+                        <Text style={styles.productNameTextStyle}>{'   '}</Text>
+                        <Image
+                          style={styles.productImageStyleInModal}
+                          source={this.state.pairProductImage}
+                        />
+                      </View>
+                    ) : (
+                      <View style={styles.modalItemContainer}>
+                        <Image
+                          style={styles.productImageStyleInModal}
+                          source={
+                            this.state.deviceProductList[
+                              this.state.selectedIndex
+                            ].src
+                          }
+                        />
+                      </View>
+                    )}
                   </View>
                 )}
                 {this.state.orderNumberVisible ? (
@@ -486,14 +609,18 @@ export default class DispenseScreen extends Component {
                         fullStarColor="#100A45"
                         halfStarEnabled={false}
                         rating={this.state.starCount}
-                        selectedStar={rating =>
-                          this.onStarRatingPress(
-                            rating,
+                        selectedStar={rating => {
+                          let productNames = [];
+                          productNames.push(
                             this.state.deviceProductList[
                               this.state.selectedIndex
                             ].productName,
-                          )
-                        }
+                          );
+                          if (this.state.pairOrderFlag) {
+                            productNames.push(this.state.pairProductName);
+                          }
+                          this.onStarRatingPress(rating, productNames);
+                        }}
                       />
                     </View>
                   </View>
@@ -514,7 +641,7 @@ export default class DispenseScreen extends Component {
                   </View>
                 ) : null}
 
-                {this.state.orderStatusCode === PLACE_THE_CUP ? (
+                {this.state.orderStatusCode === WAITING_TO_DISPENSE ? (
                   <View style={{}}>
                     <View style={styles.modalItemContainer}>
                       <MaterialCommunityIcons.Button
@@ -549,11 +676,15 @@ export default class DispenseScreen extends Component {
                       color="white"
                       backgroundColor="#100A45"
                       onPress={async () => {
-                        await this.placeOrder(
+                        await this.checkForPairOrder(
                           this.state.deviceProductList[this.state.selectedIndex]
                             .productId,
                           this.state.deviceProductList[this.state.selectedIndex]
                             .productName,
+                          this.state.deviceProductList[this.state.selectedIndex]
+                            .pairOrderFlag,
+                          this.state.deviceProductList[this.state.selectedIndex]
+                            .pairProductId,
                         );
                       }}>
                       <Text style={styles.buttonTextStyle}>Order</Text>
@@ -633,6 +764,15 @@ const styles = StyleSheet.create({
   modalItemContainer: {
     marginTop: '3%',
     alignItems: 'center',
+  },
+  alignItemsCenterContainer: {
+    alignItems: 'center',
+  },
+  pairProductImageContainer: {
+    marginTop: '3%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoStyleInModal: {
     width: responsiveScreenWidth(25),

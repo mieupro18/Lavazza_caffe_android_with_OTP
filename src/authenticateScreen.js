@@ -66,7 +66,7 @@ export default class AuthenticateScreen extends Component {
         this.setState({otpTimeoutVisible: false, otpTimeout: null});
       }
     }, 1000);*/
-    fetch(URL, {signal: (await getTimeoutSignal(20000)).signal})
+    fetch(URL, {signal: getTimeoutSignal().signal})
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);

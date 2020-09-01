@@ -22,9 +22,10 @@ import {
   IPADDRESS,
   PORT,
   HTTPS,
-  TOKEN,
   FEEDBACK_SERVER_ENDPOINT,
   INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA,
+  TOKEN,
+  SUCCESS,
 } from './macros';
 import getTimeoutSignal from './commonApis';
 
@@ -56,7 +57,7 @@ export default class ConnectScreen extends Component {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: (await getTimeoutSignal(5000)).signal,
+        signal: getTimeoutSignal().signal,
         body: JSON.stringify(feedbackData),
       })
         .then(response => response.json())
@@ -108,12 +109,12 @@ export default class ConnectScreen extends Component {
       headers: {
         tokenId: TOKEN,
       },
-      signal: (await getTimeoutSignal(5000)).signal,
+      signal: (getTimeoutSignal()).signal,
     })
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
-        if (resultData.status === 'Success') {
+        if (resultData.status === SUCCESS) {
           this.props.navigation.navigate('dispenseScreen', {
             productList: resultData.data,
             machineName: resultData.machineName,
