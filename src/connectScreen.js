@@ -109,7 +109,7 @@ export default class ConnectScreen extends Component {
       headers: {
         tokenId: TOKEN,
       },
-      signal: (getTimeoutSignal()).signal,
+      signal: getTimeoutSignal().signal,
     })
       .then(response => response.json())
       .then(async resultData => {
