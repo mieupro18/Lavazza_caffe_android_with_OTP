@@ -154,7 +154,7 @@ export default class DispenseScreen extends Component {
   };
 
   showMachineNameMismatch = async () => {
-    Alert.alert('', 'Product changed. Please reconnect', [
+    Alert.alert('', 'Product list may be changed. Please reconnect', [
       {
         text: 'Ok',
       },
