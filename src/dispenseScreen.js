@@ -182,7 +182,7 @@ export default class DispenseScreen extends Component {
             machineId: this.state.machineId,
             machineName: this.state.machineName,
           },
-          signal: getTimeoutSignal().signal,
+          signal: getTimeoutSignal(5000).signal,
         },
       )
         .then(response => response.json())
@@ -323,7 +323,7 @@ export default class DispenseScreen extends Component {
           machineId: this.state.machineId,
           machineName: this.state.machineName,
         },
-        signal: getTimeoutSignal().signal,
+        signal: getTimeoutSignal(5000).signal,
       },
     )
       .then(response => response.json())
@@ -370,7 +370,7 @@ export default class DispenseScreen extends Component {
   startDispense = async productName => {
     BackgroundTimer.clearInterval(this.timer);
     this.setState({timer: timeoutForDispense});
-    this.setState({orderStatusCode: DISPENSING});
+    this.setState({orderStatusCode: PLEASE_WAIT});
     fetch(
       HTTPS +
         '://' +
@@ -385,7 +385,7 @@ export default class DispenseScreen extends Component {
           machineId: this.state.machineId,
           machineName: this.state.machineName,
         },
-        signal: getTimeoutSignal().signal,
+        signal: getTimeoutSignal(5000).signal,
       },
     )
       .then(response => response.json())
@@ -395,6 +395,7 @@ export default class DispenseScreen extends Component {
           resultData.status === SUCCESS &&
           resultData.orderStatus === DISPENSING
         ) {
+          this.setState({orderStatusCode: DISPENSING});
           console.log('Dispense Starts');
           this.startPollForOrderStatus(productName);
         } else {
