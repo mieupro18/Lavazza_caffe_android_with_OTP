@@ -38,6 +38,7 @@ import {
   RINSING,
   MILK_NOT_READY,
   MACHINE_DETAIL_MISMATCH,
+  MACHINE_ERROR,
   orderStatus,
   INITIAL_FEEDBACK_INTERVAL,
   ROUTINE_FEEDBACK_INTERVAL,
@@ -182,7 +183,7 @@ export default class DispenseScreen extends Component {
             machineId: this.state.machineId,
             machineName: this.state.machineName,
           },
-          signal: getTimeoutSignal(5000).signal,
+          signal: (await getTimeoutSignal(5000)).signal,
         },
       )
         .then(response => response.json())
@@ -236,6 +237,8 @@ export default class DispenseScreen extends Component {
               this.showMachineNameMismatch();
             } else if (resultData.orderStatus === MACHINE_NOT_READY) {
               this.setState({orderStatusCode: MACHINE_NOT_READY});
+            } else if (resultData.orderStatus === MACHINE_ERROR) {
+              this.setState({orderStatusCode: MACHINE_ERROR});
             } else {
               this.setState({
                 orderStatusCode: SOMETHING_WENT_WRONG,
@@ -323,7 +326,7 @@ export default class DispenseScreen extends Component {
           machineId: this.state.machineId,
           machineName: this.state.machineName,
         },
-        signal: getTimeoutSignal(5000).signal,
+        signal: (await getTimeoutSignal(5000)).signal,
       },
     )
       .then(response => response.json())
@@ -385,7 +388,7 @@ export default class DispenseScreen extends Component {
           machineId: this.state.machineId,
           machineName: this.state.machineName,
         },
-        signal: getTimeoutSignal(10000).signal,
+        signal: (await getTimeoutSignal(5000)).signal,
       },
     )
       .then(response => response.json())
@@ -451,7 +454,7 @@ export default class DispenseScreen extends Component {
         <View style={styles.headerContainer}>
           <Image
             style={styles.logoStyleInHeader}
-            source={require('../assets/Lavazza-White-Logo-No-Background-.png')}
+            source={require('../assets/Lavazza-White-Logo-No-Background.png')}
           />
         </View>
         <ScrollView>
