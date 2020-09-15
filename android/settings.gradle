@@ -1,12 +1,10 @@
 rootProject.name = 'lavazza'
-include ':react-native-pinch'
-project(':react-native-pinch').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-pinch/android')
-include ':react-native-cert-pinner'
-project(':react-native-cert-pinner').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-cert-pinner/android')
-include ':react-native-ssl-pinning'
-project(':react-native-ssl-pinning').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-ssl-pinning/android')
-include ':react-native-ssl-pinning'
-project(':react-native-ssl-pinning').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-ssl-pinning/android')
+include ':@react-native-community_clipboard'
+project(':@react-native-community_clipboard').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/clipboard/android')
+include ':@react-native-community_picker'
+project(':@react-native-community_picker').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/picker/android')
+include ':@react-native-community_picker'
+project(':@react-native-community_picker').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/picker/android')
 include ':@react-native-community_masked-view'
 project(':@react-native-community_masked-view').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/masked-view/android')
 include ':react-native-safe-area-context'
@@ -23,12 +21,6 @@ include ':@react-native-community_async-storage'
 project(':@react-native-community_async-storage').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/async-storage/android')
 include ':@react-native-community_netinfo'
 project(':@react-native-community_netinfo').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-community/netinfo/android')
-include ':react-native-wifi'
-project(':react-native-wifi').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-wifi/android')
-include ':hotspotmanager'
-project(':hotspotmanager').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-wifi-hotspot/android/hotspotmanager')
-include ':react-native-wifi-reborn'
-project(':react-native-wifi-reborn').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-wifi-reborn/android')
 
 // include ':react-native-wifi-hotspot'
 // project(':react-native-wifi-hotspot').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-wifi-hotspot/android')

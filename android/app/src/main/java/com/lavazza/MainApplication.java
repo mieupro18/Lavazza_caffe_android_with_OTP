@@ -4,10 +4,9 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.localz.PinchPackage;
-import com.criticalblue.reactnative.CertPinnerPackage;
-import com.toyberman.RNSslPinningPackage;
-import com.toyberman.RNSslPinningPackage;
+import com.reactnativecommunity.clipboard.ClipboardPackage;
+import com.reactnativecommunity.picker.RNCPickerPackage;
+import com.reactnativecommunity.picker.RNCPickerPackage;
 import org.reactnative.maskedview.RNCMaskedViewPackage;
 import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
 import com.swmansion.rnscreens.RNScreensPackage;
@@ -20,11 +19,6 @@ import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
-//import com.lavazza.CertificatePinningClientFactory;
-import com.lavazza.CustomToastPackage;
-//import com.facebook.react.modules.network.OkHttpClientProvider;
-
-// import com.reactlibrary.RNWifiPackage;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -41,34 +35,11 @@ public class MainApplication extends Application implements ReactApplication {
         @Override
         protected List<ReactPackage> getPackages() {
           @SuppressWarnings("UnnecessaryLocalVariable")
-          List<ReactPackage> packages = new PackageList(this).getPackages();
-          // Packages that cannot be autolinked yet can be added manually here, for example:
-          // packages.add(new MyReactNativePackage());
-          packages.add(new CustomToastPackage());
-          
+          List<ReactPackage> packages = new PackageList(this).getPackages(); 
           return packages;
         }
 
-        // @Override
-        // protected List<ReactPackage> getPackages() {
-        // return Arrays.asList(
-        //     new MainReactPackage(),
-            //new PinchPackage(),
-            //new CertPinnerPackage(),
-            
-            //new RNSslPinningPackage(),
-            //new RNCMaskedViewPackage(),
-            //new SafeAreaContextPackage(),
-            //new RNScreensPackage(),
-            //new ReanimatedPackage(),
-            //new RNGestureHandlerPackage(),
-            //new BackgroundTimerPackage(),
-            //new AsyncStoragePackage(),
-            //new NetInfoPackage(),
-            // new RNWifiPackage();
-        //     new HotspotPackage()
-        // );
-        // }
+        
         @Override
         protected String getJSMainModuleName() {
           return "index";
@@ -85,7 +56,6 @@ public class MainApplication extends Application implements ReactApplication {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
-    //OkHttpClientProvider.setOkHttpClientFactory(new CertificatePinningClientFactory());
   }
 
   /**

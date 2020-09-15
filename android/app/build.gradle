@@ -96,7 +96,7 @@ def enableSeparateBuildPerCPUArchitecture = false
 /**
  * Run Proguard to shrink the Java bytecode in release builds.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore.
@@ -144,6 +144,13 @@ android {
         }
     }
     signingConfigs {
+        release {
+      storeFile file('lavazza.keystore')
+      storePassword 'rmr12345'
+      keyAlias 'lavazza_cafe'
+      keyPassword 'rmr12345'
+    }
+
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -158,7 +165,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://facebook.github.io/react-native/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

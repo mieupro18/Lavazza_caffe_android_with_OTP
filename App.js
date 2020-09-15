@@ -5,71 +5,46 @@
  * @format
  * @flow strict-local
  */
+import 'react-native-gesture-handler';
+import React from 'react';
 
-import React, {Component} from 'react';
-
-import ProductList from './components/productList';
+import DispenseScreen from './src/dispenseScreen';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import registerScreen from './components/registerScreen';
-import connectingScreen from './components/connectingScreen';
-//import registerScreen from './components/registerScreen';
-//import TestWifiModule from './components/TestWifiModule';
-//import StarRating from 'react-native-star-rating';
-//import { Rating, AirbnbRating } from 'react-native-ratings';
+import ConnectScreen from './src/connectScreen';
+import AuthenticateScreen from './src/authenticateScreen';
+import SplashScreen from './src/splashScreen';
 
 const Stack = createStackNavigator();
-
-/*
-class App extends Component {
-  constructor(props) {
-    super(props);
-  }
- componentWillUnmount(){
-   await TestWifiModule.forgetNetwork()
- }
-
-
-  render() {
-    return (
-      <Root>
-    <NavigationContainer>
-    <Stack.Navigator initialRouteName="Lavazza" headerMode="none">
-      <Stack.Screen name="Lavazza" component={ProductList}
-      options={{
-        headerShown:false,
-      }
-      } />
-    </Stack.Navigator>
-    </NavigationContainer>
-    </Root>
-    );
-  }
-};
-
-export default App;*/
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="connectingScreen" headerMode="none">
+      <Stack.Navigator initialRouteName="splashScreen" headerMode="none">
         <Stack.Screen
-          name="registerScreen"
-          component={registerScreen}
+          name="splashScreen"
+          component={SplashScreen}
           options={{
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="connectingScreen"
-          component={connectingScreen}
+          name="authenticateScreen"
+          component={AuthenticateScreen}
           options={{
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="productList"
-          component={ProductList}
+          name="connectScreen"
+          component={ConnectScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="dispenseScreen"
+          component={DispenseScreen}
           options={{
             headerShown: false,
           }}
