@@ -223,6 +223,7 @@ export default class AuthenticateScreen extends Component {
                   style={styles.otpInputView}
                   pinCount={4}
                   autoFocusOnLoad={false}
+                  secureTextEntry={true}
                   codeInputFieldStyle={styles.otpBoxUnderlineStyleBase}
                   codeInputHighlightStyle={
                     styles.otpBoxUnderlineStyleHighLighted
