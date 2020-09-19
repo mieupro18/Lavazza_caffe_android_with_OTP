@@ -22,9 +22,6 @@ import {
   responsiveScreenFontSize,
 } from 'react-native-responsive-dimensions';
 import {
-  IPADDRESS,
-  HTTPS,
-  PORT,
   BEFORE_PLACING_ORDER,
   PLEASE_WAIT,
   ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
@@ -47,6 +44,7 @@ import {
   productList,
   TOKEN,
   SUCCESS,
+  PI_SERVER_ENDPOINT,
 } from './macros';
 import getTimeoutSignal from './commonApis';
 import ProgressiveImage from './progressiveImage';
@@ -169,23 +167,14 @@ export default class DispenseScreen extends Component {
 
   startPollForOrderStatus = async productName => {
     this.pollingIntervalId = BackgroundTimer.setInterval(async () => {
-      fetch(
-        HTTPS +
-          '://' +
-          IPADDRESS +
-          ':' +
-          PORT +
-          '/orderStatus?orderId=' +
-          this.state.orderId,
-        {
-          headers: {
-            tokenId: TOKEN,
-            machineId: this.state.machineId,
-            machineName: this.state.machineName,
-          },
-          signal: (await getTimeoutSignal(5000)).signal,
+      fetch(PI_SERVER_ENDPOINT + '/orderStatus?orderId=' + this.state.orderId, {
+        headers: {
+          tokenId: TOKEN,
+          machineId: this.state.machineId,
+          machineName: this.state.machineName,
         },
-      )
+        signal: (await getTimeoutSignal(5000)).signal,
+      })
         .then(response => response.json())
         .then(async resultData => {
           console.log(resultData);
@@ -311,11 +300,7 @@ export default class DispenseScreen extends Component {
     });
     console.log(productId);
     fetch(
-      HTTPS +
-        '://' +
-        IPADDRESS +
-        ':' +
-        PORT +
+      PI_SERVER_ENDPOINT +
         '/order?productId=' +
         productId +
         '&pairOrderFlag=' +
@@ -374,23 +359,14 @@ export default class DispenseScreen extends Component {
     BackgroundTimer.clearInterval(this.timer);
     this.setState({timer: timeoutForDispense});
     this.setState({orderStatusCode: PLEASE_WAIT});
-    fetch(
-      HTTPS +
-        '://' +
-        IPADDRESS +
-        ':' +
-        PORT +
-        '/dispense?orderId=' +
-        this.state.orderId,
-      {
-        headers: {
-          tokenId: TOKEN,
-          machineId: this.state.machineId,
-          machineName: this.state.machineName,
-        },
-        signal: (await getTimeoutSignal(10000)).signal,
+    fetch(PI_SERVER_ENDPOINT + '/dispense?orderId=' + this.state.orderId, {
+      headers: {
+        tokenId: TOKEN,
+        machineId: this.state.machineId,
+        machineName: this.state.machineName,
       },
-    )
+      signal: (await getTimeoutSignal(10000)).signal,
+    })
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
@@ -446,6 +422,15 @@ export default class DispenseScreen extends Component {
     }
     AsyncStorage.setItem('feedbackData', JSON.stringify(feedbackData));
     console.log(await AsyncStorage.getItem('feedbackData'));
+    Alert.alert('', 'Thanks for your feedback !!!', [
+      {
+        text: 'ok',
+        onPress: () => {
+          this.setState({modalVisible: false});
+          this.props.navigation.goBack();
+        },
+      },
+    ]);
   }
 
   render() {
@@ -640,8 +625,16 @@ export default class DispenseScreen extends Component {
                       color="white"
                       backgroundColor="#100A45"
                       onPress={async () => {
-                        this.setState({modalVisible: false});
-                        this.props.navigation.goBack();
+                        if (this.state.feedbackVisible === true) {
+                          Alert.alert(
+                            'Feedback',
+                            'Please provide the feedback',
+                            [{text: 'ok'}],
+                          );
+                        } else {
+                          this.setState({modalVisible: false});
+                          this.props.navigation.goBack();
+                        }
                       }}>
                       <Text style={styles.buttonTextStyle}>Done</Text>
                     </MaterialCommunityIcons.Button>

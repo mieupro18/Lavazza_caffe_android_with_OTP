@@ -1,9 +1,10 @@
 // SERVER INFO
-const IPADDRESS = '192.168.5.1';
-const HTTPS = 'http';
-const PORT = '9876';
+const PI_SERVER_ENDPOINT = 'http://192.168.5.1:9876';
+const FEEDBACK_SERVER_ENDPOINT =
+  'https://mieupro.pythonanywhere.com/release/ver1_0/feedback';
+const OTP_SERVER_ENDPOINT =
+  'https://mieupro.pythonanywhere.com/release/ver1_0/otpRequest';
 const TOKEN = 'l@vA@zzacfd$';
-const FEEDBACK_SERVER_ENDPOINT = 'https://mieupro.pythonanywhere.com/feedback';
 
 // HTTPS STATUS CODE
 const SUCCESS = 0;
@@ -15,7 +16,7 @@ const IOS = 'ios';
 
 // FEEDBACK INTERVAL TIME in ms
 const INITIAL_FEEDBACK_INTERVAL = 86400000;
-const ROUTINE_FEEDBACK_INTERVAL = 604800000;
+const ROUTINE_FEEDBACK_INTERVAL = 1296000000;
 const INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA = 300000;
 
 // POLLING INTERVAL FOR REST CALL in ms
@@ -28,7 +29,7 @@ const timeoutForDispense = 30;
 // FEEDBACK INTERVAL TIME in ms
 //const INITIAL_FEEDBACK_INTERVAL = 60000;
 //const ROUTINE_FEEDBACK_INTERVAL = 60000;
-//const INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA = 20000;
+//const INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA = 5000;
 
 // ORDER POSITIVE STATUS CODE
 const BEFORE_PLACING_ORDER = 0;
@@ -210,11 +211,10 @@ const productList = [
 ];
 
 export {
-  IPADDRESS,
-  HTTPS,
-  PORT,
   TOKEN,
+  PI_SERVER_ENDPOINT,
   FEEDBACK_SERVER_ENDPOINT,
+  OTP_SERVER_ENDPOINT,
   BEFORE_PLACING_ORDER,
   PLEASE_WAIT,
   ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,

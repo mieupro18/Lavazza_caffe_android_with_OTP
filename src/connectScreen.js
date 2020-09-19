@@ -19,10 +19,8 @@ import {
 } from 'react-native-responsive-dimensions';
 
 import {
-  IPADDRESS,
-  PORT,
-  HTTPS,
   FEEDBACK_SERVER_ENDPOINT,
+  PI_SERVER_ENDPOINT,
   INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA,
   TOKEN,
   SUCCESS,
@@ -56,16 +54,19 @@ export default class ConnectScreen extends Component {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
+          tokenId: TOKEN,
         },
         signal: (await getTimeoutSignal(30000)).signal,
         body: JSON.stringify(feedbackData),
       })
         .then(response => response.json())
         .then(async resultData => {
-          if (resultData.status === 'Success') {
+          console.log(resultData);
+          if (resultData.status === SUCCESS) {
             console.log('data send');
             BackgroundTimer.stopBackgroundTimer(this.intervalId);
             AsyncStorage.removeItem('feedbackData');
+            //BackHandler.exitApp();
           }
         })
         .catch(async e => {
@@ -104,8 +105,7 @@ export default class ConnectScreen extends Component {
   onConnect = async () => {
     this.setState({isLoading: true});
     console.log('get Product Info');
-    console.log(HTTPS, PORT, IPADDRESS);
-    fetch(HTTPS + '://' + IPADDRESS + ':' + PORT + '/productInfo', {
+    fetch(PI_SERVER_ENDPOINT + '/productInfo', {
       headers: {
         tokenId: TOKEN,
       },

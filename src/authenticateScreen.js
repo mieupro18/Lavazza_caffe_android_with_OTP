@@ -20,6 +20,7 @@ import {
   responsiveScreenFontSize,
 } from 'react-native-responsive-dimensions';
 import getTimeoutSignal from './commonApis';
+import {OTP_SERVER_ENDPOINT, SUCCESS, TOKEN} from './macros';
 
 MaterialCommunityIcons.loadFont();
 
@@ -42,36 +43,23 @@ export default class AuthenticateScreen extends Component {
   async componentWillUnmount() {}
 
   sendOtp = async () => {
-    const otp = Math.floor(1000 + Math.random() * 9000);
-    const URL =
-      'https://login.bulksmsgateway.in/sendmessage.php?user=FHCL&password=Fhcl$m$@12@&mobile=' +
-      this.state.mobileNumber +
-      '&message=OTP for Lavazza Caffè is ' +
-      otp +
-      '. Please DO NOT SHARE with anyone "Enjoy a safe cup of refreshment" - Lavazza&sender=LVZAPP&type=3';
-    console.log(URL);
-    /*this.state.otp.push(otp.toString());
-    console.log(this.state.otp);
-    this.setState({
-      otpScreenVisible: true,
-      otpTimeoutVisible: true,
-      otpTimeout: 120,
-      isLoading: false,
-    });
-    this.intervalId = setInterval(async () => {
-      this.setState({otpTimeout: this.state.otpTimeout - 1});
-      console.log(this.state.otpTimeout);
-      if (this.state.otpTimeout === 0) {
-        clearInterval(this.intervalId);
-        this.setState({otpTimeoutVisible: false, otpTimeout: null});
-      }
-    }, 1000);*/
-    fetch(URL, {signal: (await getTimeoutSignal(30000)).signal})
+    const otpRequestData = {
+      mobileNumber: this.state.mobileNumber,
+    };
+    fetch(OTP_SERVER_ENDPOINT, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        tokenId: TOKEN,
+      },
+      body: JSON.stringify(otpRequestData),
+      signal: (await getTimeoutSignal(30000)).signal,
+    })
       .then(response => response.json())
       .then(async resultData => {
         console.log(resultData);
-        if (resultData.status === 'success') {
-          this.state.otp.push(otp.toString());
+        if (resultData.status === SUCCESS) {
+          this.state.otp.push(resultData.otp);
           console.log(this.state.otp);
           this.setState({
             isLoading: false,
@@ -88,7 +76,7 @@ export default class AuthenticateScreen extends Component {
             }
           }, 1000);
         } else {
-          Alert.alert('', 'Please check the Internet connection', [
+          Alert.alert('', 'Something went wrong Please Try again', [
             {text: 'Ok'},
           ]);
           this.setState({isLoading: false});
