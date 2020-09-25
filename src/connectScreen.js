@@ -27,6 +27,9 @@ import {
 } from './macros';
 import getTimeoutSignal from './commonApis';
 
+var retry_attempt = 0;
+const max_retry_attempt = 6;
+
 export default class ConnectScreen extends Component {
   constructor(props) {
     super(props);
@@ -75,6 +78,11 @@ export default class ConnectScreen extends Component {
     } else {
       console.log('no internet connection');
     }
+    retry_attempt = retry_attempt + 1;
+    if (retry_attempt >= max_retry_attempt) {
+      BackgroundTimer.stopBackgroundTimer(this.intervalId);
+      retry_attempt = 0;
+    }
   };
 
   handleAppStateChange = async state => {
@@ -96,6 +104,7 @@ export default class ConnectScreen extends Component {
       } else if (state === 'active') {
         console.log('active');
         BackgroundTimer.stopBackgroundTimer(this.intervalId);
+        retry_attempt = 0;
       }
     } catch (error) {
       console.log('Background error', error);
