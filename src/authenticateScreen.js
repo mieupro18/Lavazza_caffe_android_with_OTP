@@ -65,7 +65,7 @@ export default class AuthenticateScreen extends Component {
             isLoading: false,
             otpScreenVisible: true,
             otpTimeoutVisible: true,
-            otpTimeout: 120,
+            otpTimeout: 60,
           });
           this.intervalId = setInterval(async () => {
             this.setState({otpTimeout: this.state.otpTimeout - 1});
@@ -236,7 +236,7 @@ export default class AuthenticateScreen extends Component {
               {this.state.otpTimeoutVisible ? (
                 <View style={styles.otpScreenContainer}>
                   <Text style={styles.timeoutTextStyle}>
-                    OTP Timeout : {this.state.otpTimeout}
+                    Resend OTP in {this.state.otpTimeout} Sec
                   </Text>
                 </View>
               ) : (
