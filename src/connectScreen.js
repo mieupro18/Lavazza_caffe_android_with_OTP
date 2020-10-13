@@ -19,7 +19,7 @@ import {
 } from 'react-native-responsive-dimensions';
 
 import {
-  FEEDBACK_SERVER_ENDPOINT,
+  LAVAZZA_SERVER_ENDPOINT,
   PI_SERVER_ENDPOINT,
   INTERVAL_BETWEEN_SENDING_FEEDBACK_DATA,
   TOKEN,
@@ -53,7 +53,7 @@ export default class ConnectScreen extends Component {
     const netInfo = await NetInfo.fetch();
     console.log('Internet Connection :', netInfo.isInternetReachable);
     if (netInfo.isInternetReachable) {
-      fetch(FEEDBACK_SERVER_ENDPOINT, {
+      fetch(LAVAZZA_SERVER_ENDPOINT + '/feedback', {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +69,6 @@ export default class ConnectScreen extends Component {
             console.log('data send');
             BackgroundTimer.stopBackgroundTimer(this.intervalId);
             AsyncStorage.removeItem('feedbackData');
-            //BackHandler.exitApp();
           }
         })
         .catch(async e => {

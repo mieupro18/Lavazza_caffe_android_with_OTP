@@ -60,13 +60,13 @@ export default class DispenseScreen extends Component {
       modalVisible: false,
       feedbackVisible: false,
       orderNumberVisible: false,
-      waitTimeVisible: false,
+      currentOrderNumberVisible: false,
       orderStatusCode: null,
       starCount: 0,
       deviceProductList: [],
       orderId: null,
       orderNumber: null,
-      waitTime: null,
+      currentOrderNumber: null,
       pairOrderFlag: false,
       pairProductId: null,
       pairProductName: null,
@@ -142,9 +142,9 @@ export default class DispenseScreen extends Component {
     this.setState({
       orderId: null,
       orderNumberVisible: false,
-      waitTimeVisible: false,
+      currentOrderNumberVisible: false,
       orderNumber: null,
-      waitTime: null,
+      currentOrderNumber: null,
       pairOrderFlag: false,
       pairProductId: null,
       pairProductName: null,
@@ -184,6 +184,12 @@ export default class DispenseScreen extends Component {
                 ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE ||
               resultData.orderStatus === DISPENSING
             ) {
+              if (resultData.currentOrder) {
+                this.setState({
+                  currentOrderNumberVisible: true,
+                  currentOrderNumber: resultData.currentOrder,
+                });
+              }
               console.log('Continue poll');
             } else if (resultData.orderStatus === WAITING_TO_DISPENSE) {
               this.stopPollForOrderStatus();
@@ -191,8 +197,8 @@ export default class DispenseScreen extends Component {
               console.log('Stopped poll for user to place the cup');
               this.setState({
                 orderStatusCode: WAITING_TO_DISPENSE,
-                waitTimeVisible: false,
-                waitTime: null,
+                currentOrderNumberVisible: false,
+                currentOrderNumber: null,
               });
               this.timer = BackgroundTimer.setInterval(async () => {
                 this.setState({timer: this.state.timer - 1});
@@ -260,34 +266,26 @@ export default class DispenseScreen extends Component {
         this.placeOrder(productId, productName);
       } else {
         console.log(pairProduct);
-        Alert.alert(
-          '',
-          'Do you want ' +
-            productName +
-            ' with ' +
-            pairProduct.productName +
-            '?',
-          [
-            {
-              text: 'Yes',
-              onPress: () => {
-                this.setState({
-                  pairOrderFlag: pairOrderFlag,
-                  pairProductId: pairProductId,
-                  pairProductName: pairProduct.productName,
-                  pairProductImage: pairProduct.src,
-                });
-                this.placeOrder(productId, productName);
-              },
+        Alert.alert('', 'Do you want to add ' + pairProduct.productName + '?', [
+          {
+            text: 'Yes',
+            onPress: () => {
+              this.setState({
+                pairOrderFlag: pairOrderFlag,
+                pairProductId: pairProductId,
+                pairProductName: pairProduct.productName,
+                pairProductImage: pairProduct.src,
+              });
+              this.placeOrder(productId, productName);
             },
-            {
-              text: 'No',
-              onPress: () => {
-                this.placeOrder(productId, productName);
-              },
+          },
+          {
+            text: 'No',
+            onPress: () => {
+              this.placeOrder(productId, productName);
             },
-          ],
-        );
+          },
+        ]);
       }
     } else {
       this.placeOrder(productId, productName);
@@ -324,9 +322,7 @@ export default class DispenseScreen extends Component {
           this.setState({
             orderStatusCode: ORDER_PLACED_AND_RECEIVED_BY_THE_MACHINE,
             orderNumberVisible: true,
-            waitTimeVisible: true,
             orderNumber: resultData.orderNo,
-            waitTime: resultData.approxWaitTime * 30,
           });
           this.state.orderId = resultData.orderId;
           await this.startPollForOrderStatus(productName);
@@ -578,10 +574,10 @@ export default class DispenseScreen extends Component {
                   </Text>
                 </View>
 
-                {this.state.waitTimeVisible ? (
+                {this.state.currentOrderNumberVisible ? (
                   <View style={styles.modalItemContainer}>
                     <Text style={styles.timeoutTextStyle}>
-                      Approx Wait Time - {this.state.waitTime} Sec
+                      Current Serving Order No {this.state.currentOrderNumber}
                     </Text>
                   </View>
                 ) : null}
@@ -626,11 +622,9 @@ export default class DispenseScreen extends Component {
                       backgroundColor="#100A45"
                       onPress={async () => {
                         if (this.state.feedbackVisible === true) {
-                          Alert.alert(
-                            'Feedback',
-                            'Please provide the feedback',
-                            [{text: 'ok'}],
-                          );
+                          Alert.alert('', 'Please provide the feedback', [
+                            {text: 'ok'},
+                          ]);
                         } else {
                           this.setState({modalVisible: false});
                           this.props.navigation.goBack();
