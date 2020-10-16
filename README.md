@@ -30,4 +30,4 @@ Features of the app include:
 
 •       Seamless synchrony between the machine and the app ensures zero lag time
 
-DELIGHTFUL COFFEE || SMART TECH || SAFE AND SECURE PROCESS (changed the word savourful)"
+"DELIGHTFUL COFFEE || SMART TECH || SAFE AND SECURE PROCESS (changed the word savourful)"
