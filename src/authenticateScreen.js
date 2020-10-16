@@ -65,7 +65,7 @@ export default class AuthenticateScreen extends Component {
             isLoading: false,
             otpScreenVisible: true,
             otpTimeoutVisible: true,
-            otpTimeout: 60,
+            otpTimeout: 90,
           });
           this.intervalId = setInterval(async () => {
             this.setState({otpTimeout: this.state.otpTimeout - 1});
@@ -85,7 +85,11 @@ export default class AuthenticateScreen extends Component {
       .catch(async e => {
         console.log(e);
         this.setState({isLoading: false});
-        Alert.alert('', 'Please check the Internet connection', [{text: 'Ok'}]);
+        Alert.alert(
+          '',
+          'Something went wrong Please check the Internet connection',
+          [{text: 'Ok'}],
+        );
       });
   };
 
@@ -126,6 +130,7 @@ export default class AuthenticateScreen extends Component {
       enteredOTP: null,
       otpTimeoutVisible: false,
       otpTimeout: null,
+      isLoading: false,
     });
 
     this.state.otp = [];
@@ -240,12 +245,24 @@ export default class AuthenticateScreen extends Component {
                     Resend OTP in {this.state.otpTimeout} Sec
                   </Text>
                 </View>
+              ) : this.state.isLoading ? (
+                <View style={styles.otpScreenContainer}>
+                  <View style={styles.loadingActivityContainer}>
+                    <ActivityIndicator size="small" color="#100A45" />
+                    <Text style={styles.loadingActivityTextStyle}>
+                      {' '}
+                      Loading...!
+                    </Text>
+                  </View>
+                </View>
               ) : (
                 <View style={styles.otpScreenContainer}>
                   <TouchableHighlight
                     underlayColor="#100A45"
                     style={styles.resendOtpButtonStyle}
                     onPress={() => {
+                      this.setState({isLoading: true});
+                      //setTimeout(async()=>{await this.sendOtp()},3000)
                       this.sendOtp();
                     }}>
                     <Text style={styles.buttonTextStyle}>Resend OTP</Text>
