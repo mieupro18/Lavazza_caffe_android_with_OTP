@@ -1,4 +1,4 @@
-package com.lavazza;
+package com.lavazzacaffe;
 
 import com.facebook.react.ReactActivity;
 

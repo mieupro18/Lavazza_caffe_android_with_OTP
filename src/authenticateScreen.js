@@ -46,6 +46,7 @@ export default class AuthenticateScreen extends Component {
     const otpRequestData = {
       mobileNumber: this.state.mobileNumber,
     };
+    console.log(LAVAZZA_SERVER_ENDPOINT);
     fetch(LAVAZZA_SERVER_ENDPOINT + '/otpRequest', {
       method: 'post',
       headers: {

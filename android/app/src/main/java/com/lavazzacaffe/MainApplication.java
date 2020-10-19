@@ -1,4 +1,4 @@
-package com.lavazza;
+package com.lavazzacaffe;
 
 import android.app.Application;
 import android.content.Context;

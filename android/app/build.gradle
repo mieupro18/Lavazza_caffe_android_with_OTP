@@ -129,7 +129,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.lavazza"
+        applicationId "com.lavazzacaffe"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
