@@ -20,7 +20,7 @@ import {
   responsiveScreenFontSize,
 } from 'react-native-responsive-dimensions';
 import getTimeoutSignal from './commonApis';
-import {OTP_SERVER_ENDPOINT, SUCCESS, TOKEN} from './macros';
+import {LAVAZZA_SERVER_ENDPOINT, SUCCESS, TOKEN} from './macros';
 
 MaterialCommunityIcons.loadFont();
 
@@ -46,7 +46,8 @@ export default class AuthenticateScreen extends Component {
     const otpRequestData = {
       mobileNumber: this.state.mobileNumber,
     };
-    fetch(OTP_SERVER_ENDPOINT, {
+    console.log(LAVAZZA_SERVER_ENDPOINT);
+    fetch(LAVAZZA_SERVER_ENDPOINT + '/otpRequest', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -65,7 +66,7 @@ export default class AuthenticateScreen extends Component {
             isLoading: false,
             otpScreenVisible: true,
             otpTimeoutVisible: true,
-            otpTimeout: 60,
+            otpTimeout: 90,
           });
           this.intervalId = setInterval(async () => {
             this.setState({otpTimeout: this.state.otpTimeout - 1});
@@ -85,7 +86,11 @@ export default class AuthenticateScreen extends Component {
       .catch(async e => {
         console.log(e);
         this.setState({isLoading: false});
-        Alert.alert('', 'Please check the Internet connection', [{text: 'Ok'}]);
+        Alert.alert(
+          '',
+          'Something went wrong Please check the Internet connection',
+          [{text: 'Ok'}],
+        );
       });
   };
 
@@ -126,6 +131,7 @@ export default class AuthenticateScreen extends Component {
       enteredOTP: null,
       otpTimeoutVisible: false,
       otpTimeout: null,
+      isLoading: false,
     });
 
     this.state.otp = [];
@@ -162,6 +168,7 @@ export default class AuthenticateScreen extends Component {
                 <View style={styles.loadingActivityContainer}>
                   <ActivityIndicator size="small" color="#100A45" />
                   <Text style={styles.loadingActivityTextStyle}>
+                    {' '}
                     Loading...!
                   </Text>
                 </View>
@@ -230,7 +237,7 @@ export default class AuthenticateScreen extends Component {
                   OTP has been sent to
                 </Text>
                 <Text style={styles.otpSentToNumberTextStyle}>
-                  +91 {this.state.mobileNumber}
+                  +91 xxxxxx{this.state.mobileNumber % 10000}
                 </Text>
               </View>
               {this.state.otpTimeoutVisible ? (
@@ -239,12 +246,24 @@ export default class AuthenticateScreen extends Component {
                     Resend OTP in {this.state.otpTimeout} Sec
                   </Text>
                 </View>
+              ) : this.state.isLoading ? (
+                <View style={styles.otpScreenContainer}>
+                  <View style={styles.loadingActivityContainer}>
+                    <ActivityIndicator size="small" color="#100A45" />
+                    <Text style={styles.loadingActivityTextStyle}>
+                      {' '}
+                      Loading...!
+                    </Text>
+                  </View>
+                </View>
               ) : (
                 <View style={styles.otpScreenContainer}>
                   <TouchableHighlight
                     underlayColor="#100A45"
                     style={styles.resendOtpButtonStyle}
                     onPress={() => {
+                      this.setState({isLoading: true});
+                      //setTimeout(async()=>{await this.sendOtp()},3000)
                       this.sendOtp();
                     }}>
                     <Text style={styles.buttonTextStyle}>Resend OTP</Text>
@@ -334,7 +353,7 @@ const styles = StyleSheet.create({
   loadingActivityTextStyle: {
     color: '#100A45',
     fontWeight: 'bold',
-    fontSize: responsiveScreenFontSize(1.8),
+    fontSize: responsiveScreenFontSize(1.5),
   },
   buttonTextStyle: {
     color: 'white',
