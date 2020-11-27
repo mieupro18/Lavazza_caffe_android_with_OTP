@@ -10,6 +10,9 @@ import {
   Modal,
   Keyboard,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -141,113 +144,33 @@ export default class AuthenticateScreen extends Component {
   render() {
     return (
       <View style={styles.mainContainer}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <View style={styles.registrationScreenContainer}>
-              <Image
-                style={styles.logoStyleInModal}
-                source={require('../assets/lavazza_logo_without_year.png')}
-              />
-            </View>
-            <View style={styles.registrationScreenContainer}>
-              <Text style={styles.registrationTextStyle}>
-                User Registration
-              </Text>
-              <TextInput
-                style={styles.mobileNumberInput}
-                keyboardType="number-pad"
-                selectionColor="#100A45"
-                maxLength={10}
-                placeholder="Enter phone number"
-                fontSize={responsiveScreenFontSize(1.5)}
-                onChangeText={number => (this.state.mobileNumber = number)}
-              />
-            </View>
-            {this.state.isLoading ? (
-              <View style={styles.registrationScreenContainer}>
-                <View style={styles.loadingActivityContainer}>
-                  <ActivityIndicator size="small" color="#100A45" />
-                  <Text style={styles.loadingActivityTextStyle}>
-                    {' '}
-                    Loading...!
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.registrationScreenContainer}>
-                <TouchableHighlight
-                  underlayColor="#100A45"
-                  style={styles.submitButtonStyle}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    this.onSubmit();
-                  }}>
-                  <Text style={styles.buttonTextStyle}>Submit</Text>
-                </TouchableHighlight>
-              </View>
-            )}
-          </View>
-        </View>
-        <Modal
-          animationType="slide"
-          visible={this.state.otpScreenVisible}
-          onRequestClose={async () => {
-            this.onClosingOtpScreen();
-          }}>
-          <View style={styles.centeredView}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.centeredView}>
             <View style={styles.modalView}>
-              <MaterialCommunityIcons
-                name="close-circle"
-                style={styles.modalExitIconStyle}
-                onPress={() => {
-                  this.onClosingOtpScreen();
-                }}
-                size={responsiveScreenHeight(3.5)}
-              />
-              <View style={styles.otpScreenContainer}>
+              <View style={styles.registrationScreenContainer}>
                 <Image
                   style={styles.logoStyleInModal}
                   source={require('../assets/lavazza_logo_without_year.png')}
                 />
               </View>
-              <View style={styles.otpScreenContainer}>
-                <Text style={styles.OTPTextStyle}>OTP Verification</Text>
-              </View>
-              <View style={styles.otpScreenContainer}>
-                <OTPInputView
-                  style={styles.otpInputView}
-                  pinCount={4}
-                  autoFocusOnLoad={false}
-                  secureTextEntry={true}
-                  codeInputFieldStyle={styles.otpBoxUnderlineStyleBase}
-                  codeInputHighlightStyle={
-                    styles.otpBoxUnderlineStyleHighLighted
-                  }
-                  placeholderTextColor="#100A45"
-                  onCodeFilled={code => {
-                    console.log('code', code);
-                    this.state.enteredOTP = code;
-                    Keyboard.dismiss();
-                    this.checkOTPValidity();
-                  }}
+              <View style={styles.registrationScreenContainer}>
+                <Text style={styles.registrationTextStyle}>
+                  User Registration
+                </Text>
+                <TextInput
+                  style={styles.mobileNumberInput}
+                  keyboardType="number-pad"
+                  selectionColor="#100A45"
+                  maxLength={10}
+                  placeholder="Enter phone number"
+                  fontSize={responsiveScreenFontSize(1.5)}
+                  onChangeText={number => (this.state.mobileNumber = number)}
                 />
               </View>
-              <View style={styles.otpScreenContainer}>
-                <Text style={styles.otpSentToNumberTextStyle}>
-                  OTP has been sent to
-                </Text>
-                <Text style={styles.otpSentToNumberTextStyle}>
-                  +91 xxxxxx{this.state.mobileNumber % 10000}
-                </Text>
-              </View>
-              {this.state.otpTimeoutVisible ? (
-                <View style={styles.otpScreenContainer}>
-                  <Text style={styles.timeoutTextStyle}>
-                    Resend OTP in {this.state.otpTimeout} Sec
-                  </Text>
-                </View>
-              ) : this.state.isLoading ? (
-                <View style={styles.otpScreenContainer}>
+              {this.state.isLoading ? (
+                <View style={styles.registrationScreenContainer}>
                   <View style={styles.loadingActivityContainer}>
                     <ActivityIndicator size="small" color="#100A45" />
                     <Text style={styles.loadingActivityTextStyle}>
@@ -257,21 +180,110 @@ export default class AuthenticateScreen extends Component {
                   </View>
                 </View>
               ) : (
-                <View style={styles.otpScreenContainer}>
+                <View style={styles.registrationScreenContainer}>
                   <TouchableHighlight
                     underlayColor="#100A45"
-                    style={styles.resendOtpButtonStyle}
+                    style={styles.submitButtonStyle}
                     onPress={() => {
-                      this.setState({isLoading: true});
-                      //setTimeout(async()=>{await this.sendOtp()},3000)
-                      this.sendOtp();
+                      this.onSubmit();
                     }}>
-                    <Text style={styles.buttonTextStyle}>Resend OTP</Text>
+                    <Text style={styles.buttonTextStyle}>Submit</Text>
                   </TouchableHighlight>
                 </View>
               )}
             </View>
-          </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+        <Modal
+          animationType="slide"
+          visible={this.state.otpScreenVisible}
+          onRequestClose={async () => {
+            this.onClosingOtpScreen();
+          }}>
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <MaterialCommunityIcons
+                  name="close-circle"
+                  style={styles.modalExitIconStyle}
+                  onPress={() => {
+                    this.onClosingOtpScreen();
+                  }}
+                  size={responsiveScreenHeight(3.5)}
+                />
+                <View style={styles.otpScreenContainer}>
+                  <Image
+                    style={styles.logoStyleInModal}
+                    source={require('../assets/lavazza_logo_without_year.png')}
+                  />
+                </View>
+                <View style={styles.otpScreenContainer}>
+                  <Text style={styles.OTPTextStyle}>OTP Verification</Text>
+                </View>
+                <View style={styles.otpScreenContainer}>
+                  <OTPInputView
+                    style={styles.otpInputView}
+                    pinCount={4}
+                    autoFocusOnLoad={false}
+                    secureTextEntry={true}
+                    codeInputFieldStyle={styles.otpBoxUnderlineStyleBase}
+                    codeInputHighlightStyle={
+                      styles.otpBoxUnderlineStyleHighLighted
+                    }
+                    placeholderTextColor="#100A45"
+                    onCodeFilled={code => {
+                      console.log('code', code);
+                      this.state.enteredOTP = code;
+                      Keyboard.dismiss();
+                      this.checkOTPValidity();
+                    }}
+                  />
+                </View>
+                <View style={styles.otpScreenContainer}>
+                  <Text style={styles.otpSentToNumberTextStyle}>
+                    OTP has been sent to
+                  </Text>
+                  <Text style={styles.otpSentToNumberTextStyle}>
+                    +91 xxxxxx{this.state.mobileNumber % 10000}
+                  </Text>
+                </View>
+                {this.state.otpTimeoutVisible ? (
+                  <View style={styles.otpScreenContainer}>
+                    <Text style={styles.timeoutTextStyle}>
+                      Resend OTP in {this.state.otpTimeout} Sec
+                    </Text>
+                  </View>
+                ) : this.state.isLoading ? (
+                  <View style={styles.otpScreenContainer}>
+                    <View style={styles.loadingActivityContainer}>
+                      <ActivityIndicator size="small" color="#100A45" />
+                      <Text style={styles.loadingActivityTextStyle}>
+                        {' '}
+                        Loading...!
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.otpScreenContainer}>
+                    <TouchableHighlight
+                      underlayColor="#100A45"
+                      style={styles.resendOtpButtonStyle}
+                      onPress={() => {
+                        this.setState({isLoading: true});
+                        //setTimeout(async()=>{await this.sendOtp()},3000)
+                        this.sendOtp();
+                      }}>
+                      <Text style={styles.buttonTextStyle}>Resend OTP</Text>
+                    </TouchableHighlight>
+                  </View>
+                )}
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
         </Modal>
       </View>
     );
